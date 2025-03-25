@@ -79,6 +79,19 @@ class GraphDB:
         )
         return response.json()["params"]["enableFtsIndex"]["value"].lower() == "true"
 
+    def autocomplete_is_enabled(self) -> bool:
+        """
+        Checks if the autocomplete is enabled.
+
+        :return: True, if autocomplete is enabled; False, otherwise
+        :rtype: bool
+        """
+        sparql_result = self.eval_sparql_query(
+            "ASK {_:s <http://www.ontotext.com/plugins/autocomplete#enabled> ?o}",
+            validation=False
+        )
+        return sparql_result["boolean"]
+
     def similarity_index_exists(self, index_name: str) -> bool:
         """
         Checks if a similarity index with the provided name exists

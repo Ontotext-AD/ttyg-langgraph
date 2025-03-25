@@ -5,12 +5,13 @@ from pathlib import Path
 from typing import (
     Optional,
     ClassVar,
+    Type,
 )
 
 from langchain_core.callbacks import CallbackManagerForToolRun
 from openai.types import FunctionDefinition
 from openai.types.beta import FunctionTool, AssistantToolParam
-from pydantic import model_validator, computed_field
+from pydantic import model_validator, computed_field, BaseModel, Field
 from pyparsing import ParseException
 from rdflib import Graph
 from rdflib.plugins.sparql import prepareQuery
@@ -31,8 +32,14 @@ class SparqlQueryTool(BaseGraphDBTool):
     "The ontology schema to use in SPARQL queries is the schema.org ontology."
     """
 
+    class SearchInput(BaseModel):
+        query: str = Field(
+            description="A valid SPARQL SELECT, CONSTRUCT or DESCRIBE query including all prefixes from the ontology"
+        )
+
     name: str = "sparql_query"
     description: str = "Query GraphDB by SPARQL SELECT, CONSTRUCT or DESCRIBE and return result."
+    args_schema: Type[BaseModel] = SearchInput
     function_tool: ClassVar[AssistantToolParam] = FunctionTool(
         type="function",
         function=FunctionDefinition(
@@ -43,7 +50,8 @@ class SparqlQueryTool(BaseGraphDBTool):
                 "properties": {
                     "query": {
                         "type": "string",
-                        "description": "SPARQL query"
+                        "description": "A valid SPARQL SELECT, CONSTRUCT or DESCRIBE query including all "
+                                       "prefixes from the ontology"
                     }
                 },
                 "required": [

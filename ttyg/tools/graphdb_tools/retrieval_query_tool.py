@@ -3,12 +3,13 @@ import logging
 from typing import (
     Optional,
     ClassVar,
+    Type,
 )
 
 from langchain_core.callbacks import CallbackManagerForToolRun
 from openai.types import FunctionDefinition
 from openai.types.beta import FunctionTool, AssistantToolParam
-from pydantic import Field, model_validator
+from pydantic import Field, model_validator, BaseModel
 from typing_extensions import Self
 
 from .base import BaseGraphDBTool
@@ -21,9 +22,13 @@ class RetrievalQueryTool(BaseGraphDBTool):
     The agent generates the search query, which is expanded in the SPARQL template.
     """
 
+    class SearchInput(BaseModel):
+        query: str = Field(description="text query")
+
     min_graphdb_version: ClassVar[str] = "10.4"
     name: str = "retrieval_search"
     description: str = "Query the vector database to retrieve relevant pieces of documents."
+    args_schema: Type[BaseModel] = SearchInput
     function_tool: ClassVar[AssistantToolParam] = FunctionTool(
         type="function",
         function=FunctionDefinition(

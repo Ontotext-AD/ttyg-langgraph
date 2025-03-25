@@ -4,8 +4,8 @@ from typing import Optional
 from pydantic import model_validator
 from typing_extensions import Self
 
-from graphdb import GraphDB
 from ..base import BaseTool
+from ...graphdb import GraphDB
 
 
 class BaseGraphDBTool(BaseTool, metaclass=ABCMeta):

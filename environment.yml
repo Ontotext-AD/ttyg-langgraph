@@ -1,5 +1,5 @@
 # See this https://stackoverflow.com/a/71110028
-name: nlq-notebooks
+name: ttyg
 channels:
   - conda-forge
   # We want to have a reproducible setup, so we don't want default channels,
@@ -7,8 +7,8 @@ channels:
   # be listed explicitly here.
   - nodefaults
 dependencies:
-  - mamba=2.0.5
+  - mamba=2.0.8
   - conda-lock=2.5.7
-  - poetry=1.8.5
-  - python=3.12.8
-  - pip=24.3.1  # pip must be mentioned explicitly, or conda-lock will fail
+  - poetry=2.1.1
+  - python=3.12.9
+  - pip=25.0.1  # pip must be mentioned explicitly, or conda-lock will fail

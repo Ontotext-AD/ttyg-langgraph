@@ -1,11 +1,15 @@
 import json
 import logging
-from typing import Optional, ClassVar
+from typing import (
+    Optional,
+    ClassVar,
+    Type,
+)
 
 from langchain_core.callbacks import CallbackManagerForToolRun
 from openai.types import FunctionDefinition
 from openai.types.beta import FunctionTool, AssistantToolParam
-from pydantic import Field, model_validator
+from pydantic import Field, model_validator, BaseModel
 from typing_extensions import Self
 
 from .base import BaseGraphDBTool
@@ -18,9 +22,13 @@ class SimilaritySearchQueryTool(BaseGraphDBTool):
     The agent generates the similarity search term, which is expanded in the SPARQL template.
     """
 
+    class SearchInput(BaseModel):
+        query: str = Field(description="FTS search query")
+
     min_graphdb_version: ClassVar[str] = "8.7"
     name: str = "similarity_search"
     description: str = "Query GraphDB by full-text search and return a subgraph of RDF triples."
+    args_schema: Type[BaseModel] = SearchInput
     function_tool: ClassVar[AssistantToolParam] = FunctionTool(
         type="function",
         function=FunctionDefinition(

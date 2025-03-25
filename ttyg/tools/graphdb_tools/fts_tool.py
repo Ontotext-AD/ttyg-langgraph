@@ -3,16 +3,17 @@ from typing import (
     Any,
     Optional,
     ClassVar,
+    Type,
 )
 
 from langchain_core.callbacks import CallbackManagerForToolRun
 from openai.types import FunctionDefinition
 from openai.types.beta import FunctionTool, AssistantToolParam
-from pydantic import Field, model_validator
+from pydantic import Field, model_validator, BaseModel
 from typing_extensions import Self
 
-from graphdb import GraphDB
 from .base import BaseGraphDBTool
+from ...graphdb import GraphDB
 
 
 def _get_default_sparql_template(validated_data: dict[str, Any]) -> str:
@@ -63,9 +64,13 @@ class FTSTool(BaseGraphDBTool):
     The agent generates the fts search query, which is expanded in the SPARQL template.
     """
 
+    class SearchInput(BaseModel):
+        query: str = Field(description="FTS search query")
+
     min_graphdb_version: ClassVar[str] = "10.1"
     name: str = "fts_search"
     description: str = "Query GraphDB by full-text search and return a subgraph of RDF triples."
+    args_schema: Type[BaseModel] = SearchInput
     function_tool: ClassVar[AssistantToolParam] = FunctionTool(
         type="function",
         function=FunctionDefinition(
