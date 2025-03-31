@@ -15,7 +15,7 @@ from openai.types.beta.threads.run_submit_tool_outputs_params import ToolOutput
 from pydantic import BaseModel, Field, ConfigDict
 from typing_extensions import Self
 
-from .tools import Toolkit
+from ..tools import Toolkit
 
 
 class ThreadNotFoundError(Exception):
