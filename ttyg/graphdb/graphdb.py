@@ -1,3 +1,4 @@
+import logging
 import re
 from functools import cached_property
 from typing import Optional
@@ -62,6 +63,25 @@ class GraphDB:
         )
         response.raise_for_status()
         return response
+
+    def get_known_prefixes(self) -> dict[str, str]:
+        """
+        Fetch all namespace declaration info available in the repository.
+
+        :return: dictionary of prefix - namespace pairs,
+        which are returned by GraphDB /repositories/{repositoryID}/namespaces endpoint
+        :rtype: dict[str, str]
+        """
+        response = self.__get_request(
+            f"{self.__base_url}/repositories/{self.__repository_id}/namespaces",
+            headers={
+                "Accept": "application/sparql-results+json",
+            },
+        )
+        namespaces = dict()
+        for binding in response.json()["results"]["bindings"]:
+            namespaces[binding["prefix"]["value"]] = binding["namespace"]["value"]
+        return namespaces
 
     def fts_is_enabled(self) -> bool:
         """
@@ -159,67 +179,223 @@ class GraphDB:
         )
         return "COMPUTED" == sparql_result["results"]["bindings"][0]["status"]["value"]
 
-    @staticmethod
-    def __extract_iris_from_sparql_query(query: str) -> set[str]:
-        parsed = sparql.parser.parseQuery(query)
-        prefix_part = str(parsed[0])
-        query_part = str(parsed[1:])
+    def __validate_query(self, query: str) -> str:
+        """
+        Validates a given SPARQL query and corrects its prefixes, if possible.
 
-        defined_prefixes = dict(
+        :param query: SPARQL query
+        :type query: str
+        :return updated SPARQL query, where:
+         - missing prefixes are added automatically, if they appear in the declaration info available in the repository
+         - prefix definitions, which values differ from the declaration info available in the repository,
+         are automatically corrected
+        :rtype: str
+        :raises ValueError, if:
+        - the SPARQL query syntax is wrong
+        - the query is an update SPARQL query
+        - the query uses prefixes, which are not defined in the query and don't appear in
+        the declaration info available in the repository
+        - one or more IRIs used in the query are not stored in repository
+        """
+        parsed_query = self.__parse_query(query)
+        prefix_part = str(parsed_query[0])
+        query_part = str(parsed_query[1:])
+
+        defined_prefixes = self.__get_defined_prefixes(prefix_part)
+        known_prefixes = self.get_known_prefixes()
+
+        query = self.__correct_wrong_prefixes(defined_prefixes, known_prefixes, query)
+
+        prefixed_iris = self.__get_prefixed_iris(query_part)
+
+        query = self.__add_missing_prefixes(defined_prefixes, known_prefixes, prefixed_iris, query)
+
+        self.__validate_iris_are_stored(defined_prefixes, prefixed_iris, query_part)
+
+        return query
+
+    @staticmethod
+    def __parse_query(query: str) -> pyparsing.results.ParseResults:
+        """
+`       Parses a given SPARQL query.
+        If the query is an update SPARQL query, an exception is thrown, as we expect only read queries.
+
+        :param query: SPARQL query
+        :type query: str
+        :return: the parsed SPARQL query
+        :rtype: pyparsing.results.ParseResults
+        :raises ValueError, if the SPARQL query syntax is wrong or the query is an update SPARQL query
+        """
+        try:
+            return sparql.parser.parseQuery(query)
+        except pyparsing.exceptions.ParseException as e:
+            raise ValueError(e)
+
+    @staticmethod
+    def __get_defined_prefixes(prefix_part: str) -> dict[str, str]:
+        """
+        Returns the defined prefixes in the SPARQL query
+        :param prefix_part: the prefix part of the parsed query
+        :type prefix_part: str
+        :return: the defined prefix - namespace pairs as dictionary
+        :rtype: dict[str, str]
+        """
+        return dict(
             re.findall(
                 r"PrefixDecl_\{'prefix': '(.+?)', 'iri': rdflib\.term\.URIRef\('(.+?)'\)}",
                 prefix_part
             )
         )
 
-        prefixed_iris = set(map(
+    @staticmethod
+    def __correct_wrong_prefixes(
+            defined_prefixes: dict[str, str],
+            known_prefixes: dict[str, str],
+            query: str
+    ) -> str:
+        """
+        Corrects the prefix definitions in the SPARQL query,
+        which values differ from the declaration info available in the repository.
+        :param defined_prefixes: prefixes defined in the SPARQL query
+        :type defined_prefixes: dict[str, str]
+        :param known_prefixes: prefixes from the declaration info available in the repository
+        :type known_prefixes:  dict[str, str]
+        :param query: SPARQL query
+        :type query: str
+        :return: updated SPARQL query, where the prefix definitions,
+        which values differ from the declaration info available in the repository, are automatically corrected.
+        The defined_prefixes are also updated.
+        :rtype: str
+        """
+        for prefix, namespace in defined_prefixes.items():
+            if prefix in known_prefixes and known_prefixes[prefix] != namespace:
+                logging.debug(
+                    f"Correcting wrong value of prefix {prefix} : {namespace} to {known_prefixes[prefix]}"
+                )
+                regex = re.compile("prefix\\s+%s:\\s*<%s>" % (prefix, namespace), flags=re.IGNORECASE)
+                query = re.sub(regex, f"PREFIX {prefix}: <{known_prefixes[prefix]}>", query)
+                defined_prefixes[prefix] = known_prefixes[prefix]
+        return query
+
+    @staticmethod
+    def __get_prefixed_iris(query_part: str) -> set[tuple[str, str]]:
+        """
+        Returns the prefixed IRIs in the SPARQL query
+        :param query_part: the query part of the parsed query
+        :type query_part: str
+        :return: prefixed IRIs in the SPARQL query as set of tuples (prefix, local name)
+        :rtype: set[tuple[str, str]]
+        """
+        return set(map(
             lambda x: (x[0], x[1]),
             re.findall(r"pname_\{'prefix': '(.+?)', 'localname': '(.+?)'}", query_part)
         ))
 
+    @staticmethod
+    def __add_missing_prefixes(
+            defined_prefixes: dict[str, str],
+            known_prefixes: dict[str, str],
+            prefixed_iris: set[tuple[str, str]],
+            query: str
+    ) -> str:
+        """
+        Adds prefixes used in the SPARQL query, which are not defined in it, but appear in
+        the declaration info available in the repository
+        :param defined_prefixes: prefixes defined in the SPARQL query
+        :type defined_prefixes: dict[str, str]
+        :param known_prefixes: prefixes from the declaration info available in the repository
+        :type known_prefixes:  dict[str, str]
+        :param prefixed_iris: the prefixed IRIs in the SPARQL query
+        :type prefixed_iris: set[tuple[str, str]]
+        :param query: SPARQL query
+        :type query: str
+        :return: updated SPARQL query, where missing prefixes are added automatically,
+         if they appear in the declaration info available in the repository.
+         The defined_prefixes are also updated.
+        :rtype: str
+        :raises ValueError, if the query uses prefixes, which are not defined in the query and don't appear in
+        the declaration info available in the repository
+        """
         references_prefixes = set(map(lambda x: x[0], prefixed_iris))
         if not references_prefixes.issubset(defined_prefixes.keys()):
             undefined_prefixes = references_prefixes - defined_prefixes.keys()
-            raise ValueError(f"The following prefixes are undefined: {', '.join(undefined_prefixes)}")
+            for prefix in undefined_prefixes:
+                if prefix in known_prefixes:
+                    defined_prefixes[prefix] = known_prefixes[prefix]
+                    query = f"PREFIX {prefix}: <{known_prefixes[prefix]}> " + query
+            undefined_prefixes = undefined_prefixes - defined_prefixes.keys()
+            if undefined_prefixes:
+                raise ValueError(f"The following prefixes are undefined: {', '.join(undefined_prefixes)}")
+        return query
 
+    def __validate_iris_are_stored(
+            self,
+            defined_prefixes: dict[str, str],
+            prefixed_iris: set[tuple[str, str]],
+            query_part: str
+    ) -> None:
+        """
+        Executes a SPARQL query, which uses the special predicate <http://www.ontotext.com/owlim/entity#id>
+        to check if the IRIs in the SPARQL query are stored in the repository.
+        :param defined_prefixes: prefixes defined in the SPARQL query
+        :type defined_prefixes: dict[str, str]
+        :param prefixed_iris: the prefixed IRIs in the SPARQL query
+        :type prefixed_iris: set[tuple[str, str]]
+        :param query_part: the query part of the parsed query
+        :type query_part: str
+        :rtype: None
+        :raises ValueError, if one or more IRIs used in the query are not stored in repository
+        """
+        iris = self.__get_all_iris(defined_prefixes, prefixed_iris, query_part)
+        iri_values = " ".join(map(lambda x: f"<{x}>", iris))
+        iri_validation_query = """
+        SELECT ?iri {
+            VALUES ?iri {
+                %s
+            }
+            ?iri <http://www.ontotext.com/owlim/entity#id> ?id .
+            FILTER(?id < 0)
+        }
+        """
+        result = self.eval_sparql_query(iri_validation_query % iri_values, validation=False)
+        invalid_iris = list(
+            map(lambda x: f"<{x['iri']['value']}>", result["results"]["bindings"])
+        )
+        if invalid_iris:
+            raise ValueError(
+                f"The following IRIs are not used in the data stored in GraphDB: {', '.join(invalid_iris)}"
+            )
+
+    @staticmethod
+    def __get_all_iris(
+            defined_prefixes: dict[str, str],
+            prefixed_iris: set[tuple[str, str]],
+            query_part: str
+    ) -> set[str]:
+        """
+        Returns all IRIs used in the SPARQL query
+        :param defined_prefixes: prefixes defined in the SPARQL query
+        :type defined_prefixes: dict[str, str]
+        :param prefixed_iris: the prefixed IRIs in the SPARQL query
+        :type prefixed_iris: set[tuple[str, str]]
+        :param query_part: the query part of the parsed query
+        :type query_part: str
+        :return: all IRIs from the SPARQL query
+        :rtype: set[str]
+        """
         prefixed_iris_to_full_iris = {
             defined_prefixes[x[0]] + x[1]
             for x in prefixed_iris
         }
-
         full_iris = set(re.findall(r"rdflib\.term\.URIRef\('(.+?)'\)", query_part))
         iris = full_iris | prefixed_iris_to_full_iris
-
-        return set(
+        iris = set(
             filter(
                 lambda x: not x.startswith("http://www.w3.org/2001/XMLSchema#"),
                 iris
             )
         )
-
-    def __validate_sparql_query(self, query: str) -> None:
-        try:
-            iris = self.__extract_iris_from_sparql_query(query)
-            iri_values = " ".join(map(lambda x: f"<{x}>", iris))
-            iri_validation_query = """
-            SELECT ?iri {
-                VALUES ?iri {
-                    %s
-                }
-                ?iri <http://www.ontotext.com/owlim/entity#id> ?id .
-                FILTER(?id < 0)
-            }
-            """
-            result = self.eval_sparql_query(iri_validation_query % iri_values, validation=False)
-            invalid_iris = list(
-                map(lambda x: f"<{x['iri']['value']}>", result["results"]["bindings"])
-            )
-            if invalid_iris:
-                raise ValueError(
-                    f"The following IRIs are not used in the data stored in GraphDB: {', '.join(invalid_iris)}"
-                )
-        except pyparsing.exceptions.ParseException as e:
-            raise ValueError(e)
+        return iris
 
     def eval_sparql_query(
             self,
@@ -244,7 +420,7 @@ class GraphDB:
         :rtype:
         """
         if validation:
-            self.__validate_sparql_query(query)
+            query = self.__validate_query(query)
 
         self.__sparql_wrapper.setQuery(query)
 
