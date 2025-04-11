@@ -23,11 +23,17 @@ function createSimilarityIndex {
   curl -X POST -H "Content-Type: application/json;charset=UTF-8" -X POST -H "X-GraphDB-Repository: ${REPOSITORY_ID}" --data "@similarity.json" "${GRAPHDB_URI}/rest/similarity"
 }
 
+function enableAutocompleteIndex {
+  echo -e "\nEnable autocomplete index"
+  curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -d 'update=INSERT DATA { _:s  <http://www.ontotext.com/plugins/autocomplete#enabled> true . }' "${GRAPHDB_URI}/repositories/${REPOSITORY_ID}/statements"
+}
+
 docker build --tag graphdb .
 docker compose up --wait -d graphdb
 loadData
 computeRdfRank
 createSimilarityIndex
+enableAutocompleteIndex
 # sleep 60 seconds, so that the set-up is completed
 sleep 60s
 echo -e "\nFinished"

@@ -12,6 +12,7 @@ from openai.types.beta import FunctionTool, AssistantToolParam
 from pydantic import Field, model_validator, BaseModel
 from typing_extensions import Self
 
+from ttyg.utils import timeit
 from .base import BaseGraphDBTool
 
 
@@ -23,9 +24,12 @@ class AutocompleteSearchTool(BaseGraphDBTool):
 
     class SearchInput(BaseModel):
         query: str = Field(description="autocomplete search query")
-        result_class: Optional[str] = Field(description="Filter the results by class. "
-                                                        "A valid value is the full IRI of one class from the ontology. "
-                                                        "Do not use prefixes to shorten the full IRI.")
+        result_class: Optional[str] = Field(
+            description="Optionally, filter the results by class. "
+                        "A valid value is the full IRI of one class from the ontology. "
+                        "Do not use prefixes to shorten the full IRI.",
+            default=None,
+        )
 
     name: str = "autocomplete_search"
     description: str = "Discover IRIs by searching their names and getting results in order of relevance."
@@ -44,7 +48,7 @@ class AutocompleteSearchTool(BaseGraphDBTool):
                     },
                     "result_class": {
                         "type": "string",
-                        "description": "Filter the results by class. "
+                        "description": "Optionally, filter the results by class. "
                                        "A valid value is the full IRI of one class from the ontology. "
                                        "Do not use prefixes to shorten the full IRI."
                     }
@@ -89,10 +93,11 @@ class AutocompleteSearchTool(BaseGraphDBTool):
             )
         return self
 
+    @timeit
     def _run(
             self,
             query: str,
-            result_class: Optional[str],
+            result_class: Optional[str] = None,
             run_manager: Optional[CallbackManagerForToolRun] = None,
     ) -> str:
         query = self.sparql_query_template.format(
@@ -102,5 +107,5 @@ class AutocompleteSearchTool(BaseGraphDBTool):
             limit=self.limit,
         )
         logging.debug(f"Searching with autocomplete query {query}")
-        query_results = self.graph.eval_sparql_query(query, validation=False)
+        query_results = self.graph.eval_sparql_query(query)
         return json.dumps(query_results, indent=2)

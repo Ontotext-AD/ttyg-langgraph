@@ -391,7 +391,13 @@ class GraphDB:
         iris = full_iris | prefixed_iris_to_full_iris
         iris = set(
             filter(
-                lambda x: not x.startswith("http://www.w3.org/2001/XMLSchema#"),
+                lambda x: (
+                              not x.startswith("http://www.w3.org/2001/XMLSchema#")
+                          ) and (
+                              not x.startswith("http://www.ontotext.com/owlim/RDFRank#")
+                          ) and (
+                              not x.startswith("http://www.ontotext.com/plugins/autocomplete#")
+                          ),
                 iris
             )
         )

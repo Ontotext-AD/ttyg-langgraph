@@ -4,6 +4,7 @@ from typing import Optional, ClassVar
 from langchain_core.callbacks import CallbackManagerForToolRun
 from openai.types import FunctionDefinition
 from openai.types.beta import FunctionTool, AssistantToolParam
+from ttyg.utils import timeit
 
 from .base import BaseTool
 
@@ -23,6 +24,7 @@ class NowTool(BaseTool):
         )
     )
 
+    @timeit
     def _run(
             self,
             run_manager: Optional[CallbackManagerForToolRun] = None,
