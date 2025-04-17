@@ -5,3 +5,9 @@ services:
     container_name: graphdb
     ports:
       - "7200:7200"
+    healthcheck:
+      test: curl --fail http://localhost:7200/rest/repositories || exit 1
+      interval: 40s
+      timeout: 30s
+      retries: 3
+      start_period: 60s

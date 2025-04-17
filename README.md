@@ -7,11 +7,12 @@ This project is licensed under the terms of the [Apache License Version 2.0](LIC
 
 ## Usage
 
+### Prerequisites
+
+- Install [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html). `miniconda` will suffice.
+- Install [Docker](https://docs.docker.com/get-docker/). The documentation is created using Docker version `28.0.1` which bundles Docker Compose. For earlier Docker versions you may need to install Docker Compose separately.
+
 ### Set up an environment with conda and poetry
-
-#### Prerequisites
-
-You should install [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html). `miniconda` will suffice.
 
 #### Create the environment
 
@@ -32,8 +33,24 @@ or
 poetry install --with llm-anthropic
 ```
 
-### Run
+### Run Jupyter Notebooks
 
 ```bash
+conda activate ttyg
 jupyter notebook
+```
+
+## Development
+
+### Run tests
+
+```bash
+conda activate ttyg
+poetry install --with test
+cd docker
+./start.sh
+cd ..
+poetry run pytest tests/unit_tests/
+cd docker
+docker compose down -v --remove-orphans
 ```
