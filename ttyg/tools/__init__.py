@@ -3,6 +3,7 @@ from .graphdb_tools import (
     AutocompleteSearchTool,
     FTSTool,
     IRIDiscoveryTool,
+    OntologySchemaAndVocabularyTool,
     RetrievalQueryTool,
     SimilaritySearchQueryTool,
     SparqlQueryTool
@@ -15,6 +16,7 @@ __all__ = [
     "AutocompleteSearchTool",
     "FTSTool",
     "IRIDiscoveryTool",
+    "OntologySchemaAndVocabularyTool",
     "RetrievalQueryTool",
     "SimilaritySearchQueryTool",
     "SparqlQueryTool",
