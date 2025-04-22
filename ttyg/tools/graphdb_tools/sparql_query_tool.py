@@ -15,6 +15,7 @@ from pydantic import model_validator, computed_field, BaseModel, Field
 from pyparsing import ParseException
 from rdflib import Graph
 from rdflib.plugins.sparql import prepareQuery
+from ttyg.utils import timeit
 from typing_extensions import Self
 
 from .base import BaseGraphDBTool
@@ -113,6 +114,7 @@ class SparqlQueryTool(BaseGraphDBTool):
         else:
             return None
 
+    @timeit
     def _run(
             self,
             query: str,

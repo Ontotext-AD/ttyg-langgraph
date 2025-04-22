@@ -10,6 +10,7 @@ from langchain_core.callbacks import CallbackManagerForToolRun
 from openai.types import FunctionDefinition
 from openai.types.beta import FunctionTool, AssistantToolParam
 from pydantic import Field, model_validator, BaseModel
+from ttyg.utils import timeit
 from typing_extensions import Self
 
 from .base import BaseGraphDBTool
@@ -75,6 +76,7 @@ class SimilaritySearchQueryTool(BaseGraphDBTool):
             )
         return self
 
+    @timeit
     def _run(
             self,
             query: str,
