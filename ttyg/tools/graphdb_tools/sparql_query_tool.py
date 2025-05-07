@@ -22,7 +22,7 @@ class SparqlQueryTool(BaseGraphDBTool):
 
     class SearchInput(BaseModel):
         query: str = Field(
-            description="A valid SPARQL SELECT, CONSTRUCT, DESCRIBE or ASK query including all prefixes from the ontology"
+            description="A valid SPARQL SELECT, CONSTRUCT, DESCRIBE or ASK query without prefixes"
         )
 
     name: str = "sparql_query"
@@ -38,7 +38,7 @@ class SparqlQueryTool(BaseGraphDBTool):
                 "properties": {
                     "query": {
                         "type": "string",
-                        "description": "A valid SPARQL SELECT, CONSTRUCT, DESCRIBE or ASK query including all prefixes from the ontology"
+                        "description": "A valid SPARQL SELECT, CONSTRUCT, DESCRIBE or ASK query without prefixes"
                     }
                 },
                 "required": [

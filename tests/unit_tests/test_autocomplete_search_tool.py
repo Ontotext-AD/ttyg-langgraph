@@ -1,7 +1,6 @@
 import json
 
 import pytest
-
 from ttyg.graphdb import GraphDB
 from ttyg.tools import AutocompleteSearchTool
 
@@ -29,15 +28,28 @@ def test_result_class_filter(graphdb: GraphDB) -> None:
 
     results = autocomplete_search_tool._run(
         query="Skywalker",
-        result_class="https://swapi.co/vocabulary/Human"
+        result_class="voc:Human"
     )
     assert 5 == len(json.loads(results)["results"]["bindings"])
 
     results = autocomplete_search_tool._run(
         query="Skywalker",
-        result_class="https://swapi.co/vocabulary/Aleena"
+        result_class="voc:Aleena"
     )
     assert 0 == len(json.loads(results)["results"]["bindings"])
+
+
+def test_result_class_is_prefixed_with_unknown_prefix(graphdb: GraphDB) -> None:
+    autocomplete_search_tool = AutocompleteSearchTool(
+        graph=graphdb,
+        limit=5,
+    )
+    with pytest.raises(ValueError) as exc:
+        autocomplete_search_tool._run(
+            query="Skywalker",
+            result_class="unknown:Human"
+        )
+    assert "The following prefixes are undefined: unknown" == str(exc.value)
 
 
 def test_property_path_is_syntactically_wrong(graphdb: GraphDB) -> None:
@@ -89,30 +101,3 @@ def test_property_path_is_prefixed_with_unknown_prefix(graphdb: GraphDB) -> None
             query="Skywalker",
         )
     assert "The following prefixes are undefined: unknown" == str(exc.value)
-
-
-def test_result_class_uses_wrong_prefix(graphdb: GraphDB) -> None:
-    autocomplete_search_tool = AutocompleteSearchTool(
-        graph=graphdb,
-        limit=5,
-    )
-    with pytest.raises(ValueError) as exc:
-        autocomplete_search_tool._run(
-            query="Skywalker",
-            result_class="https://swapi.co/voc/Human"
-        )
-    assert "The following IRIs are not used in the data stored in GraphDB: <https://swapi.co/voc/Human>" == str(
-        exc.value)
-
-
-def test_result_class_is_prefixed(graphdb: GraphDB) -> None:
-    autocomplete_search_tool = AutocompleteSearchTool(
-        graph=graphdb,
-        limit=5,
-    )
-    with pytest.raises(ValueError) as exc:
-        autocomplete_search_tool._run(
-            query="Skywalker",
-            result_class="unknown:Human"
-        )
-    assert "The following IRIs are not used in the data stored in GraphDB: <unknown:Human>" == str(exc.value)
