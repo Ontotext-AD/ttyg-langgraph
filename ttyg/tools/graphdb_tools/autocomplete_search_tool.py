@@ -25,9 +25,7 @@ class AutocompleteSearchTool(BaseGraphDBTool):
     class SearchInput(BaseModel):
         query: str = Field(description="autocomplete search query")
         result_class: Optional[str] = Field(
-            description="Optionally, filter the results by class. "
-                        "A valid value is the full IRI of one class from the ontology. "
-                        "Do not use prefixes to shorten the full IRI.",
+            description="Optionally, filter the results by class. ",
             default=None,
         )
 
@@ -103,7 +101,7 @@ class AutocompleteSearchTool(BaseGraphDBTool):
         query = self.sparql_query_template.format(
             query=query,
             property_path=self.property_path,
-            filter_clause=f"a <{result_class}> ;" if result_class else "",
+            filter_clause=f"a {result_class} ;" if result_class else "",
             limit=self.limit,
         )
         logging.debug(f"Searching with autocomplete query {query}")
