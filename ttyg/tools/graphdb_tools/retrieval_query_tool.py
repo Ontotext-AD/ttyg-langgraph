@@ -25,6 +25,8 @@ class RetrievalQueryTool(BaseGraphDBTool):
 
     class SearchInput(BaseModel):
         query: str = Field(description="text query")
+        limit: Optional[int] = Field(description="limit the results", default=5, ge=1)
+        score: Optional[float] = Field(description="filter the results by score", default=0, ge=0, le=1)
 
     min_graphdb_version: ClassVar[str] = "10.4"
     name: str = "retrieval_search"
@@ -41,6 +43,14 @@ class RetrievalQueryTool(BaseGraphDBTool):
                     "query": {
                         "type": "string",
                         "description": "text query"
+                    },
+                    "limit": {
+                        "type": "number",
+                        "description": "limit the results"
+                    },
+                    "score": {
+                        "type": "number",
+                        "description": "filter the results by score"
                     }
                 },
                 "required": [
@@ -57,11 +67,12 @@ class RetrievalQueryTool(BaseGraphDBTool):
             retr:query "{query}" ;
             retr:limit {limit} ;
             retr:entities ?entity .
-        ?entity retr:snippets _:s .
+        ?entity retr:snippets _:s ;
+            retr:score ?score;
         _:s retr:snippetField ?field ;
             retr:snippetText ?text .
+        FILTER (?score > {score})
     }}"""
-    limit: int = Field(default=10, ge=1)
     connector_name: str
 
     @model_validator(mode="after")
@@ -76,9 +87,16 @@ class RetrievalQueryTool(BaseGraphDBTool):
     def _run(
             self,
             query: str,
+            limit: Optional[int] = 5,
+            score: Optional[float] = 0,
             run_manager: Optional[CallbackManagerForToolRun] = None,
     ) -> str:
-        query = self.sparql_query_template.format(connector_name=self.connector_name, query=query, limit=self.limit)
+        query = self.sparql_query_template.format(
+            connector_name=self.connector_name,
+            query=query,
+            limit=limit,
+            score=score,
+        )
         logging.debug(f"Searching with retrieval query {query}")
         query_results = self.graph.eval_sparql_query(query, validation=False)
         return json.dumps(query_results, indent=2)
