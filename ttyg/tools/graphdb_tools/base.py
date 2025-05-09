@@ -1,10 +1,10 @@
 from abc import ABCMeta
 from typing import Optional
 
+from langchain_core.tools import BaseTool
 from pydantic import model_validator
 from typing_extensions import Self
 
-from ..base import BaseTool
 from ...graphdb import GraphDB
 
 

@@ -7,12 +7,10 @@ from typing import (
 )
 
 from langchain_core.callbacks import CallbackManagerForToolRun
-from openai.types import FunctionDefinition
-from openai.types.beta import FunctionTool, AssistantToolParam
 from pydantic import Field, model_validator, BaseModel
-from ttyg.utils import timeit
 from typing_extensions import Self
 
+from ttyg.utils import timeit
 from .base import BaseGraphDBTool
 
 
@@ -32,34 +30,6 @@ class RetrievalQueryTool(BaseGraphDBTool):
     name: str = "retrieval_search"
     description: str = "Query the vector database to retrieve relevant pieces of documents."
     args_schema: Type[BaseModel] = SearchInput
-    function_tool: ClassVar[AssistantToolParam] = FunctionTool(
-        type="function",
-        function=FunctionDefinition(
-            name=name,
-            description=description,
-            parameters={
-                "type": "object",
-                "properties": {
-                    "query": {
-                        "type": "string",
-                        "description": "text query"
-                    },
-                    "limit": {
-                        "type": "number",
-                        "description": "limit the results"
-                    },
-                    "score": {
-                        "type": "number",
-                        "description": "filter the results by score"
-                    }
-                },
-                "required": [
-                    "query"
-                ],
-                "additionalProperties": False,
-            },
-        )
-    )
     sparql_query_template: str = """PREFIX retr: <http://www.ontotext.com/connectors/retrieval#>
     PREFIX retr-inst: <http://www.ontotext.com/connectors/retrieval/instance#>
     SELECT * {{

@@ -7,8 +7,6 @@ from typing import (
 )
 
 from langchain_core.callbacks import CallbackManagerForToolRun
-from openai.types import FunctionDefinition
-from openai.types.beta import FunctionTool, AssistantToolParam
 from pydantic import Field, model_validator, BaseModel
 from ttyg.utils import timeit
 from typing_extensions import Self
@@ -72,26 +70,6 @@ class FTSTool(BaseGraphDBTool):
     name: str = "fts_search"
     description: str = "Query GraphDB by full-text search and return a subgraph of RDF triples."
     args_schema: Type[BaseModel] = SearchInput
-    function_tool: ClassVar[AssistantToolParam] = FunctionTool(
-        type="function",
-        function=FunctionDefinition(
-            name=name,
-            description=description,
-            parameters={
-                "type": "object",
-                "properties": {
-                    "query": {
-                        "type": "string",
-                        "description": "FTS search query"
-                    }
-                },
-                "required": [
-                    "query"
-                ],
-                "additionalProperties": False,
-            },
-        )
-    )
     query_template: str = Field(default_factory=lambda validated_data: _get_default_sparql_template(validated_data))
     limit: int = Field(default=10, ge=1)
 

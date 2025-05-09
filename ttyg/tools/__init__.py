@@ -1,4 +1,3 @@
-from .base import Toolkit
 from .graphdb_tools import (
     AutocompleteSearchTool,
     FTSTool,
@@ -11,8 +10,6 @@ from .graphdb_tools import (
 from .now_tool import NowTool
 
 __all__ = [
-    "Toolkit",
-    "NowTool",
     "AutocompleteSearchTool",
     "FTSTool",
     "IRIDiscoveryTool",
@@ -20,4 +17,5 @@ __all__ = [
     "RetrievalQueryTool",
     "SimilaritySearchQueryTool",
     "SparqlQueryTool",
+    "NowTool",
 ]
