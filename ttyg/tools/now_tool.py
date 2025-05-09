@@ -1,12 +1,10 @@
 from datetime import datetime, timezone
-from typing import Optional, ClassVar
+from typing import Optional
 
 from langchain_core.callbacks import CallbackManagerForToolRun
-from openai.types import FunctionDefinition
-from openai.types.beta import FunctionTool, AssistantToolParam
-from ttyg.utils import timeit
+from langchain_core.tools import BaseTool
 
-from .base import BaseTool
+from ttyg.utils import timeit
 
 
 class NowTool(BaseTool):
@@ -16,13 +14,6 @@ class NowTool(BaseTool):
 
     name: str = "now"
     description: str = "Returns the current UTC date time in yyyy-mm-ddTHH:MM:SS format. Do not reuse responses."
-    function_tool: ClassVar[AssistantToolParam] = FunctionTool(
-        type="function",
-        function=FunctionDefinition(
-            name=name,
-            description=description,
-        )
-    )
 
     @timeit
     def _run(

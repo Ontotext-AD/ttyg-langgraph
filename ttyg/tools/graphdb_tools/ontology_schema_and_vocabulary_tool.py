@@ -1,21 +1,16 @@
 import logging
 from functools import cached_property
 from pathlib import Path
-from typing import (
-    Optional,
-    ClassVar,
-)
+from typing import Optional
 
 from langchain_core.callbacks import CallbackManagerForToolRun
-from openai.types import FunctionDefinition
-from openai.types.beta import FunctionTool, AssistantToolParam
 from pydantic import model_validator, computed_field
 from pyparsing import ParseException
 from rdflib import Graph
 from rdflib.plugins.sparql import prepareQuery
-from ttyg.utils import timeit
 from typing_extensions import Self
 
+from ttyg.utils import timeit
 from .base import BaseGraphDBTool
 
 
@@ -28,13 +23,6 @@ class OntologySchemaAndVocabularyTool(BaseGraphDBTool):
 
     name: str = "ontology_schema_and_vocabulary_tool"
     description: str = "Tool, which returns the configured ontology schema and vocabulary for the SPARQL queries"
-    function_tool: ClassVar[AssistantToolParam] = FunctionTool(
-        type="function",
-        function=FunctionDefinition(
-            name=name,
-            description=description,
-        )
-    )
     ontology_schema_file_path: Optional[Path] = None
     ontology_schema_query: Optional[str] = None
 

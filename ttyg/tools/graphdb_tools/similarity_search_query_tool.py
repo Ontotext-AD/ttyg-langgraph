@@ -7,12 +7,10 @@ from typing import (
 )
 
 from langchain_core.callbacks import CallbackManagerForToolRun
-from openai.types import FunctionDefinition
-from openai.types.beta import FunctionTool, AssistantToolParam
 from pydantic import Field, model_validator, BaseModel
-from ttyg.utils import timeit
 from typing_extensions import Self
 
+from ttyg.utils import timeit
 from .base import BaseGraphDBTool
 
 
@@ -30,26 +28,6 @@ class SimilaritySearchQueryTool(BaseGraphDBTool):
     name: str = "similarity_search"
     description: str = "Query GraphDB by full-text search and return a subgraph of RDF triples."
     args_schema: Type[BaseModel] = SearchInput
-    function_tool: ClassVar[AssistantToolParam] = FunctionTool(
-        type="function",
-        function=FunctionDefinition(
-            name=name,
-            description=description,
-            parameters={
-                "type": "object",
-                "properties": {
-                    "query": {
-                        "type": "string",
-                        "description": "FTS search query"
-                    }
-                },
-                "required": [
-                    "query"
-                ],
-                "additionalProperties": False,
-            },
-        )
-    )
     sparql_query_template: str = """PREFIX sim: <http://www.ontotext.com/graphdb/similarity/>
     PREFIX sim-index: <http://www.ontotext.com/graphdb/similarity/instance/>
     DESCRIBE ?documentID {{

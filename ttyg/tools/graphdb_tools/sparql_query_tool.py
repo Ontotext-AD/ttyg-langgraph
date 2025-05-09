@@ -2,16 +2,13 @@ import json
 import logging
 from typing import (
     Optional,
-    ClassVar,
     Type,
 )
 
 from langchain_core.callbacks import CallbackManagerForToolRun
-from openai.types import FunctionDefinition
-from openai.types.beta import FunctionTool, AssistantToolParam
 from pydantic import BaseModel, Field
-from ttyg.utils import timeit
 
+from ttyg.utils import timeit
 from .base import BaseGraphDBTool
 
 
@@ -28,26 +25,6 @@ class SparqlQueryTool(BaseGraphDBTool):
     name: str = "sparql_query"
     description: str = "Query GraphDB by SPARQL SELECT, CONSTRUCT, DESCRIBE or ASK query and return result."
     args_schema: Type[BaseModel] = SearchInput
-    function_tool: ClassVar[AssistantToolParam] = FunctionTool(
-        type="function",
-        function=FunctionDefinition(
-            name=name,
-            description=description,
-            parameters={
-                "type": "object",
-                "properties": {
-                    "query": {
-                        "type": "string",
-                        "description": "A valid SPARQL SELECT, CONSTRUCT, DESCRIBE or ASK query without prefixes"
-                    }
-                },
-                "required": [
-                    "query"
-                ],
-                "additionalProperties": False,
-            },
-        )
-    )
 
     @timeit
     def _run(

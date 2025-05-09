@@ -8,8 +8,6 @@ from typing import (
 )
 
 from langchain_core.callbacks import CallbackManagerForToolRun
-from openai.types import FunctionDefinition
-from openai.types.beta import FunctionTool, AssistantToolParam
 from pydantic import Field, model_validator, BaseModel
 from ttyg.utils import timeit
 from typing_extensions import Self
@@ -69,26 +67,6 @@ class IRIDiscoveryTool(BaseGraphDBTool):
     name: str = "iri_discovery"
     description: str = "Discovery IRIs by full-text search in labels."
     args_schema: Type[BaseModel] = SearchInput
-    function_tool: ClassVar[AssistantToolParam] = FunctionTool(
-        type="function",
-        function=FunctionDefinition(
-            name=name,
-            description=description,
-            parameters={
-                "type": "object",
-                "properties": {
-                    "query": {
-                        "type": "string",
-                        "description": "FTS search query"
-                    }
-                },
-                "required": [
-                    "query"
-                ],
-                "additionalProperties": False,
-            },
-        )
-    )
     query_template: str = Field(default_factory=lambda validated_data: _get_default_sparql_template(validated_data))
     limit: int = Field(default=10, ge=1)
 

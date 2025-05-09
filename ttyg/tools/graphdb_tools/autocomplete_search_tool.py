@@ -2,13 +2,10 @@ import json
 import logging
 from typing import (
     Optional,
-    ClassVar,
     Type,
 )
 
 from langchain_core.callbacks import CallbackManagerForToolRun
-from openai.types import FunctionDefinition
-from openai.types.beta import FunctionTool, AssistantToolParam
 from pydantic import Field, model_validator, BaseModel
 from typing_extensions import Self
 
@@ -32,32 +29,6 @@ class AutocompleteSearchTool(BaseGraphDBTool):
     name: str = "autocomplete_search"
     description: str = "Discover IRIs by searching their names and getting results in order of relevance."
     args_schema: Type[BaseModel] = SearchInput
-    function_tool: ClassVar[AssistantToolParam] = FunctionTool(
-        type="function",
-        function=FunctionDefinition(
-            name=name,
-            description=description,
-            parameters={
-                "type": "object",
-                "properties": {
-                    "query": {
-                        "type": "string",
-                        "description": "Autocomplete search query"
-                    },
-                    "result_class": {
-                        "type": "string",
-                        "description": "Optionally, filter the results by class. "
-                                       "A valid value is the full IRI of one class from the ontology. "
-                                       "Do not use prefixes to shorten the full IRI."
-                    }
-                },
-                "required": [
-                    "query"
-                ],
-                "additionalProperties": False,
-            },
-        )
-    )
     sparql_query_template: str = """PREFIX rank: <http://www.ontotext.com/owlim/RDFRank#>
     PREFIX auto: <http://www.ontotext.com/plugins/autocomplete#>
     SELECT ?iri ?name ?rank {{
