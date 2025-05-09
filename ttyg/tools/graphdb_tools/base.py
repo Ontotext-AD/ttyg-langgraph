@@ -5,7 +5,7 @@ from langchain_core.tools import BaseTool
 from pydantic import model_validator
 from typing_extensions import Self
 
-from ...graphdb import GraphDB
+from ttyg.graphdb import GraphDB
 
 
 class BaseGraphDBTool(BaseTool, metaclass=ABCMeta):

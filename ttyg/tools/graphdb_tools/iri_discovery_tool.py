@@ -9,11 +9,11 @@ from typing import (
 
 from langchain_core.callbacks import CallbackManagerForToolRun
 from pydantic import Field, model_validator, BaseModel
-from ttyg.utils import timeit
 from typing_extensions import Self
 
+from ttyg.graphdb import GraphDB
+from ttyg.utils import timeit
 from .base import BaseGraphDBTool
-from ...graphdb import GraphDB
 
 
 def _get_default_sparql_template(validated_data: dict[str, Any]) -> str:
