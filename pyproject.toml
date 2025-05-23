@@ -1,10 +1,11 @@
 [tool.poetry]
 name = "ttyg"
 version = "0.0.1b0"
-description = "Talk to your graph (TTYG) module provides functionality for Natural Language Querying (NLQ) using Graphwise GraphDB"
+description = "Natural language querying for GraphDB using LangGraph agents"
 authors = []
 readme = "README.md"
 license = "Apache-2.0"
+repository = "https://github.com/Ontotext-AD/ttyg-langgraph"
 
 [tool.poetry.dependencies]
 conda-lock = "3.0.1"
@@ -16,6 +17,7 @@ langgraph = "0.4.3"
 
 [tool.poetry.group.test.dependencies]
 pytest = "8.3.5"
+pytest-cov = "6.1.1"
 
 [tool.poetry.group.llm-openai]
 optional = true
