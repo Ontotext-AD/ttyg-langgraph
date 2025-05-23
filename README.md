@@ -45,11 +45,11 @@ conda activate ttyg
 Depending on the LLM provider you want to use, run one of the following:
 
 ```
-poetry install --with llm-openai
+poetry install --with llm-openai --with jupyter
 # or
-poetry install --with llm-anthropic
+poetry install --with llm-anthropic --with jupyter
 # or
-poetry install --with llm-databricks
+poetry install --with llm-databricks --with jupyter
 ```
 
 #### Run the Notebook
