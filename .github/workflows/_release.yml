@@ -1,0 +1,65 @@
+name: release
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Miniconda
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          activate-environment: ttyg
+          environment-file: environment.yml
+          auto-activate-base: false
+
+      - name: Install dependencies with Poetry
+        shell: bash -l {0}
+        run: |
+          conda activate ttyg
+          poetry install --no-interaction --with test
+
+      - name: Start GraphDB
+        run: |
+          cd docker
+          ./start.sh
+
+      - name: Run tests
+        shell: bash -l {0}
+        run: |
+          conda activate ttyg
+          poetry run pytest --cov=ttyg --cov-report=term-missing tests/unit_tests/
+
+      - name: Clean up Docker Compose
+        if: always()
+        run: |
+          cd docker
+          docker compose down -v --remove-orphans
+
+      - name: Build package
+        shell: bash -l {0}
+        run: |
+          conda activate ttyg
+          poetry build
+
+      - name: Publish to TestPyPI
+        shell: bash -l {0}
+        env:
+          TEST_PYPI_TOKEN: ${{ secrets.TEST_PYPI_TOKEN }}
+        run: |
+          conda activate ttyg
+          poetry config repositories.testpypi https://test.pypi.org/legacy/
+          poetry publish -r testpypi --no-interaction --username __token__ --password $TEST_PYPI_TOKEN
+
+      - name: Publish to PyPI
+        shell: bash -l {0}
+        env:
+          PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
+        run: |
+          conda activate ttyg
+          poetry publish --no-interaction --username __token__ --password $PYPI_TOKEN

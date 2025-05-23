@@ -6,7 +6,7 @@ from langchain_core.runnables import RunnableConfig
 from langgraph.graph.graph import CompiledGraph
 
 
-def run_react_agent(
+def run_agent(
         agent: CompiledGraph,
         input_: dict[str, Any] | Any,
         config: RunnableConfig | None = None,
