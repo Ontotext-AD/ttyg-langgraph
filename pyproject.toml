@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ttyg"
-version = "0.0.1b0"
+version = "1.0.0"
 description = "Natural language querying for GraphDB using LangGraph agents"
 authors = []
 readme = "README.md"
