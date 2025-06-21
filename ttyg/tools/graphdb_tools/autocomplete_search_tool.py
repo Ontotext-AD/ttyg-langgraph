@@ -25,6 +25,7 @@ class AutocompleteSearchTool(BaseGraphDBTool):
             description="Optionally, filter the results by class. ",
             default=None,
         )
+        limit: Optional[int] = Field(description="limit the results", default=10, ge=1)
 
     name: str = "autocomplete_search"
     description: str = "Discover IRIs by searching their names and getting results in order of relevance."
@@ -39,7 +40,6 @@ class AutocompleteSearchTool(BaseGraphDBTool):
     }}
     ORDER BY DESC(?rank)
     LIMIT {limit}"""
-    limit: int = Field(default=10, ge=1)
     property_path: str = Field(
         default="<http://www.w3.org/2000/01/rdf-schema#label>",
         examples=[
@@ -66,6 +66,7 @@ class AutocompleteSearchTool(BaseGraphDBTool):
     def _run(
             self,
             query: str,
+            limit: Optional[int] = 10,
             result_class: Optional[str] = None,
             run_manager: Optional[CallbackManagerForToolRun] = None,
     ) -> str:
@@ -73,7 +74,7 @@ class AutocompleteSearchTool(BaseGraphDBTool):
             query=query,
             property_path=self.property_path,
             filter_clause=f"a {result_class} ;" if result_class else "",
-            limit=self.limit,
+            limit=limit,
         )
         logging.debug(f"Searching with autocomplete query {query}")
         query_results = self.graph.eval_sparql_query(query)
