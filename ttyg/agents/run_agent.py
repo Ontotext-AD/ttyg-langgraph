@@ -3,11 +3,11 @@ import time
 from typing import Any
 
 from langchain_core.runnables import RunnableConfig
-from langgraph.graph.graph import CompiledGraph
+from langgraph.graph.state import CompiledStateGraph
 
 
 def run_agent(
-        agent: CompiledGraph,
+        agent: CompiledStateGraph,
         input_: dict[str, Any] | Any,
         config: RunnableConfig | None = None,
         last_message_id: str = None,

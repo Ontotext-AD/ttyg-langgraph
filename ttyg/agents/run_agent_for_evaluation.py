@@ -3,11 +3,11 @@ from typing import Any
 
 from langchain_core.messages import AIMessage, ToolMessage, ToolCall
 from langchain_core.messages.ai import UsageMetadata
-from langgraph.graph.graph import CompiledGraph
+from langgraph.graph.state import CompiledStateGraph
 
 
 def run_agent_for_evaluation(
-        agent: CompiledGraph,
+        agent: CompiledStateGraph,
         question_id: str,
         input_: dict[str, Any] | Any,
 ) -> dict[str, Any]:
