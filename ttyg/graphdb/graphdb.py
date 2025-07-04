@@ -1,7 +1,7 @@
 import logging
 import re
 from functools import cached_property
-from typing import Optional
+from typing import Optional, Tuple, Any
 
 import pyparsing
 import requests
@@ -106,7 +106,7 @@ class GraphDB:
         :return: True, if autocomplete is enabled; False, otherwise
         :rtype: bool
         """
-        sparql_result = self.eval_sparql_query(
+        sparql_result, _ = self.eval_sparql_query(
             "ASK {_:s <http://www.ontotext.com/plugins/autocomplete#enabled> ?o}",
             validation=False
         )
@@ -173,7 +173,7 @@ class GraphDB:
         False, if the RDF rank status is "CANCELED", "COMPUTING", "EMPTY", "ERROR", "OUTDATED" or "CONFIG_CHANGED".
         :rtype: bool
         """
-        sparql_result = self.eval_sparql_query(
+        sparql_result, _ = self.eval_sparql_query(
             "PREFIX rank: <http://www.ontotext.com/owlim/RDFRank#> SELECT ?status { ?s rank:status ?status }",
             validation=False
         )
@@ -357,7 +357,7 @@ class GraphDB:
             FILTER(?id < 0)
         }
         """
-        result = self.eval_sparql_query(iri_validation_query % iri_values, validation=False)
+        result, _ = self.eval_sparql_query(iri_validation_query % iri_values, validation=False)
         invalid_iris = list(
             map(lambda x: f"<{x['iri']['value']}>", result["results"]["bindings"])
         )
@@ -410,7 +410,7 @@ class GraphDB:
             query: str,
             result_format: str = None,
             validation: bool = True
-    ):
+    ) -> Tuple[Any, str]:
         """
         Executes the provided SPARQL query against GraphDB.
 
@@ -441,6 +441,6 @@ class GraphDB:
         self.__sparql_wrapper.setReturnFormat(result_format)
         results = self.__sparql_wrapper.query().convert()
         if result_format != JSON:
-            return results.decode("utf-8")
+            return results.decode("utf-8"), query
         else:
-            return results
+            return results, query

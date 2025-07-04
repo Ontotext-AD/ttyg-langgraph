@@ -5,6 +5,7 @@ from typing import (
     Optional,
     ClassVar,
     Type,
+    Tuple,
 )
 
 from langchain_core.callbacks import CallbackManagerForToolRun
@@ -67,6 +68,7 @@ class IRIDiscoveryTool(BaseGraphDBTool):
     name: str = "iri_discovery"
     description: str = "Discovery IRIs by full-text search in labels."
     args_schema: Type[BaseModel] = SearchInput
+    response_format: str = "content_and_artifact"
     query_template: str = Field(default_factory=lambda validated_data: _get_default_sparql_template(validated_data))
     limit: int = Field(default=10, ge=1)
 
@@ -91,8 +93,8 @@ class IRIDiscoveryTool(BaseGraphDBTool):
             self,
             query: str,
             run_manager: Optional[CallbackManagerForToolRun] = None,
-    ) -> str:
+    ) -> Tuple[str, str]:
         query = self.query_template.format(query=query, limit=self.limit)
         logging.debug(f"Searching with iri discovery {query}")
-        query_results = self.graph.eval_sparql_query(query, validation=False)
-        return json.dumps(query_results, indent=2)
+        query_results, query = self.graph.eval_sparql_query(query, validation=False)
+        return json.dumps(query_results, indent=2), query

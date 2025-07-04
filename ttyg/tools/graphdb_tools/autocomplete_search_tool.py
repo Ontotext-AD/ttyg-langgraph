@@ -3,6 +3,7 @@ import logging
 from typing import (
     Optional,
     Type,
+    Tuple,
 )
 
 from langchain_core.callbacks import CallbackManagerForToolRun
@@ -30,12 +31,12 @@ class AutocompleteSearchTool(BaseGraphDBTool):
     name: str = "autocomplete_search"
     description: str = "Discover IRIs by searching their names and getting results in order of relevance."
     args_schema: Type[BaseModel] = SearchInput
+    response_format: str = "content_and_artifact"
     sparql_query_template: str = """PREFIX rank: <http://www.ontotext.com/owlim/RDFRank#>
     PREFIX auto: <http://www.ontotext.com/plugins/autocomplete#>
     SELECT ?iri ?name ?rank {{
         ?iri auto:query "{query}" ;
-            {property_path} ?name ;
-            {filter_clause}
+            {property_path} ?name ;{filter_clause}
             rank:hasRDFRank5 ?rank.
     }}
     ORDER BY DESC(?rank)
@@ -69,13 +70,13 @@ class AutocompleteSearchTool(BaseGraphDBTool):
             limit: Optional[int] = 10,
             result_class: Optional[str] = None,
             run_manager: Optional[CallbackManagerForToolRun] = None,
-    ) -> str:
+    ) -> Tuple[str, str]:
         query = self.sparql_query_template.format(
             query=query,
             property_path=self.property_path,
-            filter_clause=f"a {result_class} ;" if result_class else "",
+            filter_clause=f" a {result_class} ;" if result_class else "",
             limit=limit,
         )
         logging.debug(f"Searching with autocomplete query {query}")
-        query_results = self.graph.eval_sparql_query(query)
-        return json.dumps(query_results, indent=2)
+        query_results, query = self.graph.eval_sparql_query(query)
+        return json.dumps(query_results, indent=2), query

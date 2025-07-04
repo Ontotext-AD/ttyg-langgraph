@@ -4,6 +4,7 @@ from typing import (
     Optional,
     ClassVar,
     Type,
+    Tuple,
 )
 
 from langchain_core.callbacks import CallbackManagerForToolRun
@@ -30,6 +31,7 @@ class RetrievalQueryTool(BaseGraphDBTool):
     name: str = "retrieval_search"
     description: str = "Query the vector database to retrieve relevant pieces of documents."
     args_schema: Type[BaseModel] = SearchInput
+    response_format: str = "content_and_artifact"
     sparql_query_template: str = """PREFIX retr: <http://www.ontotext.com/connectors/retrieval#>
     PREFIX retr-inst: <http://www.ontotext.com/connectors/retrieval/instance#>
     SELECT * {{
@@ -60,7 +62,7 @@ class RetrievalQueryTool(BaseGraphDBTool):
             limit: Optional[int] = 5,
             score: Optional[float] = 0,
             run_manager: Optional[CallbackManagerForToolRun] = None,
-    ) -> str:
+    ) -> Tuple[str, str]:
         query = self.sparql_query_template.format(
             connector_name=self.connector_name,
             query=query,
@@ -69,4 +71,4 @@ class RetrievalQueryTool(BaseGraphDBTool):
         )
         logging.debug(f"Searching with retrieval query {query}")
         query_results = self.graph.eval_sparql_query(query, validation=False)
-        return json.dumps(query_results, indent=2)
+        return json.dumps(query_results, indent=2), query

@@ -3,6 +3,7 @@ import logging
 from typing import (
     Optional,
     Type,
+    Tuple,
 )
 
 from langchain_core.callbacks import CallbackManagerForToolRun
@@ -24,6 +25,7 @@ class SparqlQueryTool(BaseGraphDBTool):
 
     name: str = "sparql_query"
     description: str = "Query GraphDB by SPARQL SELECT, CONSTRUCT, DESCRIBE or ASK query and return result."
+    response_format: str = "content_and_artifact"
     args_schema: Type[BaseModel] = SearchInput
 
     @timeit
@@ -31,7 +33,7 @@ class SparqlQueryTool(BaseGraphDBTool):
             self,
             query: str,
             run_manager: Optional[CallbackManagerForToolRun] = None,
-    ) -> str:
+    ) -> Tuple[str, str]:
         logging.debug(f"Executing generated SPARQL query {query}")
-        query_results = self.graph.eval_sparql_query(query)
-        return json.dumps(query_results, indent=2)
+        query_results, actual_query = self.graph.eval_sparql_query(query)
+        return json.dumps(query_results, indent=2), actual_query

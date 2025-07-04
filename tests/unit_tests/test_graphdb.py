@@ -32,21 +32,23 @@ def test_eval_sparql_query_valid_update_query_raises_value_error(graphdb: GraphD
 
 
 def test_eval_sparql_query_select_query(graphdb: GraphDB) -> None:
-    results = graphdb.eval_sparql_query(
+    results, query = graphdb.eval_sparql_query(
         "PREFIX voc: <https://swapi.co/vocabulary/> SELECT * { ?character voc:eyeColor \"red\"}"
     )
     assert 6 == len(results["results"]["bindings"])
+    assert "PREFIX voc: <https://swapi.co/vocabulary/> SELECT * { ?character voc:eyeColor \"red\"}" == query
 
 
 def test_eval_sparql_query_ask_query(graphdb: GraphDB) -> None:
-    results = graphdb.eval_sparql_query(
+    results, query = graphdb.eval_sparql_query(
         "PREFIX voc: <https://swapi.co/vocabulary/> ASK { ?character voc:eyeColor ?eyeColor}"
     )
     assert True == results["boolean"]
+    assert "PREFIX voc: <https://swapi.co/vocabulary/> ASK { ?character voc:eyeColor ?eyeColor}" == query
 
 
 def test_eval_sparql_query_describe_query(graphdb: GraphDB) -> None:
-    results = graphdb.eval_sparql_query(
+    results, query = graphdb.eval_sparql_query(
         "PREFIX voc: <https://swapi.co/vocabulary/> DESCRIBE voc:eyeColor"
     )
     results = Graph().parse(
@@ -54,10 +56,11 @@ def test_eval_sparql_query_describe_query(graphdb: GraphDB) -> None:
         format="turtle",
     )
     assert 5 == len(results)
+    assert "PREFIX voc: <https://swapi.co/vocabulary/> DESCRIBE voc:eyeColor" == query
 
 
 def test_eval_sparql_query_construct_query(graphdb: GraphDB) -> None:
-    results = graphdb.eval_sparql_query(
+    results, query = graphdb.eval_sparql_query(
         "PREFIX voc: <https://swapi.co/vocabulary/> "
         "CONSTRUCT {?character voc:eyeColor ?eyeColor} "
         "{?character voc:eyeColor ?eyeColor}"
@@ -67,6 +70,9 @@ def test_eval_sparql_query_construct_query(graphdb: GraphDB) -> None:
         format="turtle",
     )
     assert 86 == len(results)
+    assert ("PREFIX voc: <https://swapi.co/vocabulary/> "
+            "CONSTRUCT {?character voc:eyeColor ?eyeColor} "
+            "{?character voc:eyeColor ?eyeColor}") == query
 
 
 def test_eval_sparql_query_missing_known_prefix_is_added(graphdb: GraphDB) -> None:
@@ -80,10 +86,12 @@ def test_eval_sparql_query_missing_known_prefix_is_added(graphdb: GraphDB) -> No
             "Response:\n"
             "b\"MALFORMED QUERY: QName 'voc:eyeColor' uses an undefined prefix\"") == str(exc.value)
 
-    results = graphdb.eval_sparql_query(
+    results, query = graphdb.eval_sparql_query(
         "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> SELECT * { ?character voc:eyeColor \"red\"}"
     )
     assert 6 == len(results["results"]["bindings"])
+    assert ("PREFIX voc: <https://swapi.co/vocabulary/> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> "
+            "SELECT * { ?character voc:eyeColor \"red\"}") == query
 
 
 def test_eval_sparql_query_missing_unknown_prefix(graphdb: GraphDB) -> None:
@@ -95,16 +103,18 @@ def test_eval_sparql_query_missing_unknown_prefix(graphdb: GraphDB) -> None:
 
 
 def test_eval_sparql_query_wrong_prefix_is_fixed(graphdb: GraphDB) -> None:
-    results = graphdb.eval_sparql_query(
+    results, query = graphdb.eval_sparql_query(
         "PREFIX voc: <https://swapi.co/voc/> SELECT * { ?character voc:eyeColor \"red\"}",
         validation=False,
     )
     assert 0 == len(results["results"]["bindings"])
+    assert "PREFIX voc: <https://swapi.co/voc/> SELECT * { ?character voc:eyeColor \"red\"}" == query
 
-    results = graphdb.eval_sparql_query(
+    results, query = graphdb.eval_sparql_query(
         "PREFIX voc: <https://swapi.co/voc/> SELECT * { ?character voc:eyeColor \"red\"}"
     )
     assert 6 == len(results["results"]["bindings"])
+    assert "PREFIX voc: <https://swapi.co/vocabulary/> SELECT * { ?character voc:eyeColor \"red\"}" == query
 
 
 def test_eval_sparql_query_iri_which_is_not_stored(graphdb: GraphDB) -> None:
