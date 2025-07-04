@@ -4,6 +4,7 @@ from typing import (
     Optional,
     ClassVar,
     Type,
+    Tuple,
 )
 
 from langchain_core.callbacks import CallbackManagerForToolRun
@@ -70,6 +71,7 @@ class FTSTool(BaseGraphDBTool):
     name: str = "fts_search"
     description: str = "Query GraphDB by full-text search and return a subgraph of RDF triples."
     args_schema: Type[BaseModel] = SearchInput
+    response_format: str = "content_and_artifact"
     query_template: str = Field(default_factory=lambda validated_data: _get_default_sparql_template(validated_data))
     limit: int = Field(default=10, ge=1)
 
@@ -94,8 +96,8 @@ class FTSTool(BaseGraphDBTool):
             self,
             query: str,
             run_manager: Optional[CallbackManagerForToolRun] = None,
-    ) -> str:
+    ) -> Tuple[str, str]:
         query = self.query_template.format(query=query, limit=self.limit)
         logging.debug(f"Searching with FTS query {query}")
-        query_results = self.graph.eval_sparql_query(query, validation=False)
-        return query_results
+        query_results, query = self.graph.eval_sparql_query(query, validation=False)
+        return query_results, query

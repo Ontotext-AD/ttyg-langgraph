@@ -4,6 +4,7 @@ from typing import (
     Optional,
     ClassVar,
     Type,
+    Tuple,
 )
 
 from langchain_core.callbacks import CallbackManagerForToolRun
@@ -28,6 +29,7 @@ class SimilaritySearchQueryTool(BaseGraphDBTool):
     name: str = "similarity_search"
     description: str = "Query GraphDB by full-text search and return a subgraph of RDF triples."
     args_schema: Type[BaseModel] = SearchInput
+    response_format: str = "content_and_artifact"
     sparql_query_template: str = """PREFIX sim: <http://www.ontotext.com/graphdb/similarity/>
     PREFIX sim-index: <http://www.ontotext.com/graphdb/similarity/instance/>
     DESCRIBE ?documentID {{
@@ -59,7 +61,7 @@ class SimilaritySearchQueryTool(BaseGraphDBTool):
             self,
             query: str,
             run_manager: Optional[CallbackManagerForToolRun] = None,
-    ) -> str:
+    ) -> Tuple[str, str]:
         query = self.sparql_query_template.format(
             index_name=self.index_name,
             query=query,
@@ -68,4 +70,4 @@ class SimilaritySearchQueryTool(BaseGraphDBTool):
         )
         logging.debug(f"Searching with similarity query {query}")
         query_results = self.graph.eval_sparql_query(query, validation=False)
-        return json.dumps(query_results, indent=2)
+        return json.dumps(query_results, indent=2), query

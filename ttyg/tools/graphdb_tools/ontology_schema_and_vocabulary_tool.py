@@ -62,8 +62,9 @@ class OntologySchemaAndVocabularyTool(BaseGraphDBTool):
     def schema_graph(self) -> Graph:
         if self.ontology_schema_query:
             logging.debug("Configuring the ontology schema with query.")
+            sparql_results, _ = self.graph.eval_sparql_query(self.ontology_schema_query, validation=False)
             schema_graph = Graph().parse(
-                data=self.graph.eval_sparql_query(self.ontology_schema_query, validation=False),
+                data=sparql_results,
                 format="turtle",
             )
             logging.debug(f"Collected {len(schema_graph)} ontology schema statements.")
