@@ -44,7 +44,6 @@ class GraphDB:
         self.__read_timeout = read_timeout
         self.__sparql_wrapper = SPARQLWrapper(f"{base_url}/repositories/{repository_id}")
         self.__sparql_wrapper.setTimeout(sparql_timeout)
-        self.__sparql_wrapper.setUseKeepAlive()
         self.__auth_header = auth_header
         if self.__auth_header:
             self.__sparql_wrapper.addCustomHttpHeader(
