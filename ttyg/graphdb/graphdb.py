@@ -19,6 +19,7 @@ class GraphDB:
             repository_id: str,
             connect_timeout: int = 2,
             read_timeout: int = 10,
+            sparql_timeout: int = 15,
             auth_header: Optional[str] = None,
     ):
         """
@@ -32,6 +33,8 @@ class GraphDB:
         :type connect_timeout: int
         :param read_timeout: read timeout in seconds for calls to GraphDB REST API, default = 10
         :type read_timeout: int
+        :param sparql_timeout: timeout in seconds for calls to the SPARQL endpoint, default = 15
+        :type sparql_timeout: int
         :param auth_header: optional, the value of the "Authorization" header to pass to GraphDB, if it's secured
         :type auth_header: Optional[str]
         """
@@ -40,6 +43,8 @@ class GraphDB:
         self.__connect_timeout = connect_timeout
         self.__read_timeout = read_timeout
         self.__sparql_wrapper = SPARQLWrapper(f"{base_url}/repositories/{repository_id}")
+        self.__sparql_wrapper.setTimeout(sparql_timeout)
+        self.__sparql_wrapper.setUseKeepAlive()
         self.__auth_header = auth_header
         if self.__auth_header:
             self.__sparql_wrapper.addCustomHttpHeader(
