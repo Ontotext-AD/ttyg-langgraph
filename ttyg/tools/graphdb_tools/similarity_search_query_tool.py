@@ -51,7 +51,7 @@ class SimilaritySearchQueryTool(BaseGraphDBTool):
     @model_validator(mode="after")
     def check_similarity_index_exists(self) -> Self:
         if not self.graph.similarity_index_exists(self.index_name):
-            raise ValueError(
+            logging.warning(
                 f"Similarity index with name \"{self.index_name}\" doesn't exist."
             )
         return self

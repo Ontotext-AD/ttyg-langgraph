@@ -10,5 +10,5 @@ dependencies:
   - mamba=2.3.*
   - conda-lock=3.0.*
   - poetry=2.1.*
-  - python=3.12.*
-  - pip=25.1.*  # pip must be mentioned explicitly, or conda-lock will fail
+  - python=3.13.*
+  - pip=25.2.*  # pip must be mentioned explicitly, or conda-lock will fail
