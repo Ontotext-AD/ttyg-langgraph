@@ -1,5 +1,6 @@
 import logging
 import re
+from enum import Enum
 from functools import cached_property
 from typing import Optional, Tuple, Any
 
@@ -8,6 +9,16 @@ import requests
 from SPARQLWrapper import SPARQLWrapper, JSON, TURTLE
 from rdflib.plugins import sparql
 from requests import Response
+
+
+class GraphDBRdfRankStatus(Enum):
+    CANCELED = "CANCELED"
+    COMPUTED = "COMPUTED"
+    COMPUTING = "COMPUTING"
+    EMPTY = "EMPTY"
+    ERROR = "ERROR"
+    OUTDATED = "OUTDATED"
+    CONFIG_CHANGED = "CONFIG_CHANGED"
 
 
 class GraphDB:
@@ -169,19 +180,17 @@ class GraphDB:
         )
         return response.json()["productVersion"]
 
-    def rdf_rank_is_computed(self) -> bool:
+    def get_rdf_rank_status(self) -> GraphDBRdfRankStatus:
         """
-        Checks if the RDF rank for the repository is computed.
+        Returns the status of GraphDB RDF rank for the repository.
 
-        :return: True, if the RDF rank status is "COMPUTED".
-        False, if the RDF rank status is "CANCELED", "COMPUTING", "EMPTY", "ERROR", "OUTDATED" or "CONFIG_CHANGED".
-        :rtype: bool
+        :rtype: GraphDBRdfRankStatus
         """
         sparql_result, _ = self.eval_sparql_query(
             "PREFIX rank: <http://www.ontotext.com/owlim/RDFRank#> SELECT ?status { ?s rank:status ?status }",
             validation=False
         )
-        return "COMPUTED" == sparql_result["results"]["bindings"][0]["status"]["value"]
+        return GraphDBRdfRankStatus[sparql_result["results"]["bindings"][0]["status"]["value"]]
 
     def __validate_query(self, query: str) -> str:
         """

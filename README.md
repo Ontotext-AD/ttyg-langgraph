@@ -31,7 +31,7 @@ A sample usage is provided in [the Jupyter Notebook](jupyter_notebooks/NLQ_with_
 #### Prerequisites
 
 - Install [conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html). `miniconda` will suffice.
-- Install [Docker](https://docs.docker.com/get-docker/). The documentation is created using Docker version `28.0.1` which bundles Docker Compose. For earlier Docker versions you may need to install Docker Compose separately.
+- Install [Docker](https://docs.docker.com/get-docker/). The documentation is created using Docker version `28.3.3` which bundles Docker Compose. For earlier Docker versions you may need to install Docker Compose separately.
 
 #### Create and activate the Conda environment
 

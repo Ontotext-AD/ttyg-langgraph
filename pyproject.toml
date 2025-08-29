@@ -5,10 +5,10 @@ description = "Natural language querying for GraphDB using LangGraph agents"
 authors = []
 readme = "README.md"
 license = "Apache-2.0"
-requires-python = ">=3.12,<3.13"
+requires-python = ">=3.13,<3.14"
 dependencies = [
-    "sparqlwrapper>=2.0.0,<2.1.0",
-    "langgraph==0.5.0",
+    "sparqlwrapper==2.0.0",
+    "langgraph==0.6.6",
 ]
 
 [project.urls]
@@ -28,19 +28,19 @@ optional = true
 optional = true
 
 [tool.poetry.group.llm-openai.dependencies]
-langchain-openai = "0.3.24"
+langchain-openai = "0.3.32"
 
 [tool.poetry.group.llm-databricks]
 optional = true
 
 [tool.poetry.group.llm-databricks.dependencies]
-databricks-langchain = "0.5.1"
+databricks-langchain = "0.7.1"
 
 [tool.poetry.group.llm-anthropic]
 optional = true
 
 [tool.poetry.group.llm-anthropic.dependencies]
-langchain-anthropic = "0.3.15"
+langchain-anthropic = "0.3.19"
 
 [build-system]
 requires = ["poetry-core>=2.0.0"]

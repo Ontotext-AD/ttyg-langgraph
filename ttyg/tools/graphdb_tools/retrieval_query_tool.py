@@ -50,7 +50,7 @@ class RetrievalQueryTool(BaseGraphDBTool):
     @model_validator(mode="after")
     def check_retrieval_connector_exists(self) -> Self:
         if not self.graph.retrieval_connector_exists(self.connector_name):
-            raise ValueError(
+            logging.warning(
                 f"ChatGPT Retrieval connector with name \"{self.connector_name}\" doesn't exist."
             )
         return self

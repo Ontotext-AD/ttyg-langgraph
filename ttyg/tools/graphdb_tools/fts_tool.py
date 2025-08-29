@@ -11,7 +11,7 @@ from langchain_core.callbacks import CallbackManagerForToolRun
 from pydantic import Field, model_validator, BaseModel
 from typing_extensions import Self
 
-from ttyg.graphdb import GraphDB
+from ttyg.graphdb import GraphDB, GraphDBRdfRankStatus
 from ttyg.utils import timeit
 from .base import BaseGraphDBTool
 
@@ -78,15 +78,16 @@ class FTSTool(BaseGraphDBTool):
     @model_validator(mode="after")
     def graphdb_config(self) -> Self:
         if not self.graph.fts_is_enabled():
-            raise ValueError(
+            logging.warning(
                 "You must enable the full-text search (FTS) index for the repository "
                 "to use the full-text search (FTS) tool."
             )
 
-        if not self.graph.rdf_rank_is_computed():
+        rdf_rank_status = self.graph.get_rdf_rank_status()
+        if rdf_rank_status != GraphDBRdfRankStatus.COMPUTED:
             logging.warning(
-                "The RDF Rank for the repository is not computed. It's recommended to compute it "
-                "in order to use the full-text search (FTS) tool."
+                f"The RDF Rank status for of the repository is \"{rdf_rank_status}\". "
+                f"It's recommended the status to be COMPUTED in order to use the full-text search (FTS) tool."
             )
 
         return self
