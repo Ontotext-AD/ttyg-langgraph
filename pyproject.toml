@@ -1,6 +1,6 @@
 [project]
 name = "ttyg"
-version = "1.7.0"
+version = "1.7.1"
 description = "Natural language querying for GraphDB using LangGraph agents"
 authors = []
 readme = "README.md"
