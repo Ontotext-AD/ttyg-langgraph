@@ -412,6 +412,8 @@ class GraphDB:
                               not x.startswith("http://www.ontotext.com/plugins/autocomplete#")
                           ) and (
                               not x.startswith("http://www.openrdf.org/schema/sesame#")
+                          ) and (
+                              not x.startswith("http://spinrdf.org/spif#")
                           ),
                 iris
             )
