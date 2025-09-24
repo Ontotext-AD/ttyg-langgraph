@@ -11,6 +11,17 @@ def run_agent_for_evaluation(
         question_id: str,
         input_: dict[str, Any] | Any,
 ) -> dict[str, Any]:
+    """
+    Runs an agent over a given question and returns the output as expected by the evaluation library https://github.com/Ontotext-AD/graphrag-eval.
+    :param agent: the agent
+    :type agent: CompiledStateGraph
+    :param question_id: the unique question id for tracing purposes
+    :type question_id: str
+    :param input_: the input (question) passed to the agent
+    :type input_: dict[str, Any] | Any
+    :return: check https://github.com/Ontotext-AD/graphrag-eval documentation for the expected keys in the result
+    :rtype: dict[str, Any]
+    """
     try:
         sum_input_tokens, sum_output_tokens, sum_total_tokens = 0, 0, 0
         tools_calls, tools_outputs = [], dict()
@@ -47,11 +58,12 @@ def run_agent_for_evaluation(
             "output_tokens": sum_output_tokens,
             "total_tokens": sum_total_tokens,
             "elapsed_sec": elapsed_sec,
-            "tools_calls": tools_calls,
-            "answer": output["messages"][-1].content
+            "actual_steps": tools_calls,
+            "actual_answer": output["messages"][-1].content
         }
     except Exception as e:
         return {
             "question_id": question_id,
             "error": str(e),
+            "status": "error",
         }
