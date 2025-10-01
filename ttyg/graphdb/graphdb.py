@@ -6,7 +6,7 @@ from typing import Optional, Tuple, Any
 
 import pyparsing
 import requests
-from SPARQLWrapper import SPARQLWrapper, JSON, TURTLE
+from SPARQLWrapper import SPARQLWrapper, Wrapper, JSON, TURTLE
 from rdflib.plugins import sparql
 from requests import Response
 
@@ -446,6 +446,7 @@ class GraphDB:
             query = self.__validate_query(query)
 
         self.__sparql_wrapper.setQuery(query)
+        self.__sparql_wrapper.setMethod(Wrapper.POST)
 
         if result_format is None:
             if self.__sparql_wrapper.queryType in {"CONSTRUCT", "DESCRIBE"}:
