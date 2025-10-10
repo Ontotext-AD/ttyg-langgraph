@@ -86,7 +86,7 @@ class FTSTool(BaseGraphDBTool):
         rdf_rank_status = self.graph.get_rdf_rank_status()
         if rdf_rank_status != GraphDBRdfRankStatus.COMPUTED:
             logging.warning(
-                f"The RDF Rank status for of the repository is \"{rdf_rank_status}\". "
+                f"The RDF Rank status of the repository is \"{rdf_rank_status}\". "
                 f"It's recommended the status to be COMPUTED in order to use the full-text search (FTS) tool."
             )
 
