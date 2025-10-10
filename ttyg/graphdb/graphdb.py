@@ -21,6 +21,15 @@ class GraphDBRdfRankStatus(Enum):
     CONFIG_CHANGED = "CONFIG_CHANGED"
 
 
+class GraphDBAutocompleteStatus(Enum):
+    READY = "READY"
+    READY_CONFIG = "READY_CONFIG"
+    ERROR = "ERROR"
+    NONE = "NONE"
+    BUILDING = "BUILDING"
+    CANCELED = "CANCELED"
+
+
 class GraphDB:
     """Ontotext GraphDB https://graphdb.ontotext.com/ Client"""
 
@@ -114,18 +123,17 @@ class GraphDB:
         )
         return response.json()["params"]["enableFtsIndex"]["value"].lower() == "true"
 
-    def autocomplete_is_enabled(self) -> bool:
+    def get_autocomplete_status(self) -> GraphDBAutocompleteStatus:
         """
-        Checks if the autocomplete is enabled.
+        Returns the status of the autocomplete index for the repository.
 
-        :return: True, if autocomplete is enabled; False, otherwise
-        :rtype: bool
+        :rtype: GraphDBAutocompleteStatus
         """
         sparql_result, _ = self.eval_sparql_query(
-            "ASK {_:s <http://www.ontotext.com/plugins/autocomplete#enabled> ?o}",
+            "PREFIX auto: <http://www.ontotext.com/plugins/autocomplete#> SELECT ?status { ?s auto:status ?status }",
             validation=False
         )
-        return sparql_result["boolean"]
+        return GraphDBAutocompleteStatus[sparql_result["results"]["bindings"][0]["status"]["value"]]
 
     def similarity_index_exists(self, index_name: str) -> bool:
         """

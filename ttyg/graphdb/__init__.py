@@ -1,6 +1,11 @@
-from .graphdb import GraphDB, GraphDBRdfRankStatus
+from .graphdb import (
+    GraphDB,
+    GraphDBRdfRankStatus,
+    GraphDBAutocompleteStatus,
+)
 
 __all__ = [
     "GraphDB",
     "GraphDBRdfRankStatus",
+    "GraphDBAutocompleteStatus",
 ]
