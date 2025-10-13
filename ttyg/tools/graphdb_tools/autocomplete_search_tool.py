@@ -10,7 +10,7 @@ from langchain_core.callbacks import CallbackManagerForToolRun
 from pydantic import Field, model_validator, BaseModel
 from typing_extensions import Self
 
-from ttyg.graphdb import GraphDBRdfRankStatus
+from ttyg.graphdb import GraphDBAutocompleteStatus, GraphDBRdfRankStatus
 from ttyg.utils import timeit
 from .base import BaseGraphDBTool
 
@@ -51,16 +51,17 @@ class AutocompleteSearchTool(BaseGraphDBTool):
 
     @model_validator(mode="after")
     def graphdb_config(self) -> Self:
-        if not self.graph.autocomplete_is_enabled():
+        autocomplete_status = self.graph.get_autocomplete_status()
+        if autocomplete_status != GraphDBAutocompleteStatus.READY:
             logging.warning(
-                "You must enable the autocomplete index for the repository "
-                "to use the Autocomplete search tool."
+                "The Autocomplete index status of the repository is \"{autocomplete_status}\". "
+                f"It's recommended the status to be READY in order to use the Autocomplete search tool."
             )
 
         rdf_rank_status = self.graph.get_rdf_rank_status()
         if rdf_rank_status != GraphDBRdfRankStatus.COMPUTED:
             logging.warning(
-                f"The RDF Rank status for of the repository is \"{rdf_rank_status}\". "
+                f"The RDF Rank status of the repository is \"{rdf_rank_status}\". "
                 f"It's recommended the status to be COMPUTED in order to use the Autocomplete search tool."
             )
         return self
