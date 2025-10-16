@@ -54,14 +54,14 @@ class AutocompleteSearchTool(BaseGraphDBTool):
         autocomplete_status = self.graph.get_autocomplete_status()
         if autocomplete_status != GraphDBAutocompleteStatus.READY:
             logging.warning(
-                "The Autocomplete index status of the repository is \"{autocomplete_status}\". "
+                f"The Autocomplete index status of the repository is \"{autocomplete_status.name}\". "
                 f"It's recommended the status to be READY in order to use the Autocomplete search tool."
             )
 
         rdf_rank_status = self.graph.get_rdf_rank_status()
         if rdf_rank_status != GraphDBRdfRankStatus.COMPUTED:
             logging.warning(
-                f"The RDF Rank status of the repository is \"{rdf_rank_status}\". "
+                f"The RDF Rank status of the repository is \"{rdf_rank_status.name}\". "
                 f"It's recommended the status to be COMPUTED in order to use the Autocomplete search tool."
             )
         return self
