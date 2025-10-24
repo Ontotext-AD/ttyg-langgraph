@@ -1,5 +1,6 @@
 import logging
 import re
+import threading
 from enum import Enum
 from functools import cached_property
 from typing import Optional, Tuple, Any
@@ -32,6 +33,8 @@ class GraphDBAutocompleteStatus(Enum):
 
 class GraphDB:
     """Ontotext GraphDB https://graphdb.ontotext.com/ Client"""
+
+    _lock = threading.Lock()
 
     def __init__(
         self,
@@ -250,10 +253,11 @@ class GraphDB:
         :rtype: pyparsing.results.ParseResults
         :raises ValueError, if the SPARQL query syntax is wrong or the query is an update SPARQL query
         """
-        try:
-            return sparql.parser.parseQuery(query)
-        except pyparsing.exceptions.ParseException as e:
-            raise ValueError(e)
+        with GraphDB._lock: # use lock, because this method is not thread safe
+            try:
+                return sparql.parser.parseQuery(query)
+            except pyparsing.exceptions.ParseException as e:
+                raise ValueError(e)
 
     @staticmethod
     def __get_defined_prefixes(prefix_part: str) -> dict[str, str]:

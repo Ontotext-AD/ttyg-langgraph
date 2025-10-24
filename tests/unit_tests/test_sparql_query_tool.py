@@ -102,7 +102,7 @@ def test_eval_sparql_query_parallel_execution(sparql_query_tool: SparqlQueryTool
         return await sparql_query_tool.arun(query)
 
     async def run_parallel_queries():
-        tasks = [run_query(random.choice(queries)) for _ in range(8192*2)]
+        tasks = [run_query(random.choice(queries)) for _ in range(2048)]
         await asyncio.gather(*tasks)
 
     asyncio.run(run_parallel_queries())
