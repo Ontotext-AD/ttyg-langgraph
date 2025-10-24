@@ -1,4 +1,6 @@
+import asyncio
 import json
+import random
 
 import pytest
 
@@ -79,3 +81,28 @@ def test_eval_sparql_query_iri_which_is_not_stored(sparql_query_tool: SparqlQuer
         sparql_query_tool._run("PREFIX voc: <https://swapi.co/voc/> SELECT * { ?character voc:unknown \"red\"}")
     assert ("The following IRIs are not used in the data stored in GraphDB: "
             "<https://swapi.co/vocabulary/unknown>") == str(exc.value)
+
+
+def test_eval_sparql_query_parallel_execution(sparql_query_tool: SparqlQueryTool) -> None:
+    random.seed(35)
+    queries = [
+        "DESCRIBE <https://swapi.co/vocabulary/eyeColor>",
+        "DESCRIBE <https://swapi.co/resource/aleena/47>",
+        "DESCRIBE <https://swapi.co/resource/besalisk/71>",
+        "DESCRIBE <https://swapi.co/resource/cerean/52>",
+        "DESCRIBE <https://swapi.co/resource/chagrian/59>",
+        "DESCRIBE <https://swapi.co/resource/clawdite/70>",
+        "DESCRIBE <https://swapi.co/resource/droid/23>",
+        "DESCRIBE <https://swapi.co/resource/droid/2>",
+        "DESCRIBE <https://swapi.co/resource/droid/3>",
+        "DESCRIBE <https://swapi.co/resource/droid/75>",
+    ]
+
+    async def run_query(query: str):
+        return await sparql_query_tool.arun(query)
+
+    async def run_parallel_queries():
+        tasks = [run_query(random.choice(queries)) for _ in range(8192*2)]
+        await asyncio.gather(*tasks)
+
+    asyncio.run(run_parallel_queries())
