@@ -34,13 +34,13 @@ class GraphDB:
     """Ontotext GraphDB https://graphdb.ontotext.com/ Client"""
 
     def __init__(
-            self,
-            base_url: str,
-            repository_id: str,
-            connect_timeout: int = 2,
-            read_timeout: int = 10,
-            sparql_timeout: int = 15,
-            auth_header: Optional[str] = None,
+        self,
+        base_url: str,
+        repository_id: str,
+        connect_timeout: int = 2,
+        read_timeout: int = 10,
+        sparql_timeout: int = 15,
+        auth_header: Optional[str] = None,
     ):
         """
         Initializes a GraphDB Client.
@@ -58,19 +58,22 @@ class GraphDB:
         :param auth_header: optional, the value of the "Authorization" header to pass to GraphDB, if it's secured
         :type auth_header: Optional[str]
         """
+
         self.__base_url = base_url
         self.__repository_id = repository_id
+        self.__sparql_timeout = sparql_timeout
         self.__connect_timeout = connect_timeout
         self.__read_timeout = read_timeout
-        self.__sparql_wrapper = SPARQLWrapper(f"{base_url}/repositories/{repository_id}")
-        self.__sparql_wrapper.setTimeout(sparql_timeout)
         self.__auth_header = auth_header
-        if self.__auth_header:
-            self.__sparql_wrapper.addCustomHttpHeader(
-                "Authorization", self.__auth_header
-            )
 
         self.__check_connectivity()
+
+    def __new_sparql_wrapper(self) -> SPARQLWrapper:
+        wrapper = SPARQLWrapper(f"{self.__base_url}/repositories/{self.__repository_id}")
+        wrapper.setTimeout(self.__sparql_timeout)
+        if self.__auth_header:
+            wrapper.addCustomHttpHeader("Authorization", self.__auth_header)
+        return wrapper
 
     def __check_connectivity(self):
         self.eval_sparql_query(query="ASK {?s ?p ?o}", validation=False)
@@ -270,9 +273,9 @@ class GraphDB:
 
     @staticmethod
     def __correct_wrong_prefixes(
-            defined_prefixes: dict[str, str],
-            known_prefixes: dict[str, str],
-            query: str
+        defined_prefixes: dict[str, str],
+        known_prefixes: dict[str, str],
+        query: str
     ) -> str:
         """
         Corrects the prefix definitions in the SPARQL query,
@@ -314,10 +317,10 @@ class GraphDB:
 
     @staticmethod
     def __add_missing_prefixes(
-            defined_prefixes: dict[str, str],
-            known_prefixes: dict[str, str],
-            prefixed_iris: set[tuple[str, str]],
-            query: str
+        defined_prefixes: dict[str, str],
+        known_prefixes: dict[str, str],
+        prefixed_iris: set[tuple[str, str]],
+        query: str
     ) -> str:
         """
         Adds prefixes used in the SPARQL query, which are not defined in it, but appear in
@@ -350,10 +353,10 @@ class GraphDB:
         return query
 
     def __validate_iris_are_stored(
-            self,
-            defined_prefixes: dict[str, str],
-            prefixed_iris: set[tuple[str, str]],
-            query_part: str
+        self,
+        defined_prefixes: dict[str, str],
+        prefixed_iris: set[tuple[str, str]],
+        query_part: str
     ) -> None:
         """
         Executes a SPARQL query, which uses the special predicate <http://www.ontotext.com/owlim/entity#id>
@@ -389,9 +392,9 @@ class GraphDB:
 
     @staticmethod
     def __get_all_iris(
-            defined_prefixes: dict[str, str],
-            prefixed_iris: set[tuple[str, str]],
-            query_part: str
+        defined_prefixes: dict[str, str],
+        prefixed_iris: set[tuple[str, str]],
+        query_part: str
     ) -> set[str]:
         """
         Returns all IRIs used in the SPARQL query
@@ -431,10 +434,10 @@ class GraphDB:
         return iris
 
     def eval_sparql_query(
-            self,
-            query: str,
-            result_format: str = None,
-            validation: bool = True
+        self,
+        query: str,
+        result_format: str = None,
+        validation: bool = True
     ) -> Tuple[Any, str]:
         """
         Executes the provided SPARQL query against GraphDB.
@@ -455,17 +458,18 @@ class GraphDB:
         if validation:
             query = self.__validate_query(query)
 
-        self.__sparql_wrapper.setQuery(query)
-        self.__sparql_wrapper.setMethod(Wrapper.POST)
+        sparql_wrapper = self.__new_sparql_wrapper()
+        sparql_wrapper.setQuery(query)
+        sparql_wrapper.setMethod(Wrapper.POST)
 
         if result_format is None:
-            if self.__sparql_wrapper.queryType in {"CONSTRUCT", "DESCRIBE"}:
+            if sparql_wrapper.queryType in {"CONSTRUCT", "DESCRIBE"}:
                 result_format = TURTLE
             else:
                 result_format = JSON
 
-        self.__sparql_wrapper.setReturnFormat(result_format)
-        results = self.__sparql_wrapper.query().convert()
+        sparql_wrapper.setReturnFormat(result_format)
+        results = sparql_wrapper.query().convert()
         if result_format != JSON:
             return results.decode("utf-8"), query
         else:
