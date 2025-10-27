@@ -139,7 +139,13 @@ class GraphDB:
             "PREFIX auto: <http://www.ontotext.com/plugins/autocomplete#> SELECT ?status { ?s auto:status ?status }",
             validation=False
         )
-        return GraphDBAutocompleteStatus[sparql_result["results"]["bindings"][0]["status"]["value"]]
+        try:
+            raw_value = sparql_result["results"]["bindings"][0]["status"]["value"]
+            if raw_value in GraphDBAutocompleteStatus:
+                return GraphDBAutocompleteStatus[raw_value]
+        except IndexError:
+            return GraphDBAutocompleteStatus.ERROR
+        return GraphDBAutocompleteStatus.ERROR
 
     def similarity_index_exists(self, index_name: str) -> bool:
         """
@@ -204,7 +210,13 @@ class GraphDB:
             "PREFIX rank: <http://www.ontotext.com/owlim/RDFRank#> SELECT ?status { ?s rank:status ?status }",
             validation=False
         )
-        return GraphDBRdfRankStatus[sparql_result["results"]["bindings"][0]["status"]["value"]]
+        try:
+            raw_value = sparql_result["results"]["bindings"][0]["status"]["value"]
+            if raw_value in GraphDBRdfRankStatus:
+                return GraphDBRdfRankStatus[raw_value]
+        except IndexError:
+            return GraphDBRdfRankStatus.ERROR
+        return GraphDBRdfRankStatus.ERROR
 
     def __validate_query(self, query: str) -> str:
         """
@@ -244,7 +256,7 @@ class GraphDB:
     @staticmethod
     def __parse_query(query: str) -> pyparsing.results.ParseResults:
         """
-`       Parses a given SPARQL query.
+        Parses a given SPARQL query.
         If the query is an update SPARQL query, an exception is thrown, as we expect only read queries.
 
         :param query: SPARQL query
@@ -253,7 +265,7 @@ class GraphDB:
         :rtype: pyparsing.results.ParseResults
         :raises ValueError, if the SPARQL query syntax is wrong or the query is an update SPARQL query
         """
-        with GraphDB._lock: # use lock, because this method is not thread safe
+        with GraphDB._lock:  # use lock, because this method is not thread safe
             try:
                 return sparql.parser.parseQuery(query)
             except pyparsing.exceptions.ParseException as e:
