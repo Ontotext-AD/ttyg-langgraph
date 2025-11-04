@@ -168,23 +168,23 @@ class GraphDB:
 
     def retrieval_connector_exists(self, connector_name: str) -> bool:
         """
-        Checks if a ChatGPT Retrieval Plugin Connector with the provided name exists
-        using the GraphDB REST API /rest/connectors/existing endpoint.
+        Checks if a ChatGPT Retrieval Plugin Connector with the provided name exists.
 
         :param connector_name: the connector name
         :type connector_name: str
         :return: True, if the connector exists; False, otherwise
         :rtype: bool
         """
-        response = self.__get_request(
-            f"{self.__base_url}/rest/connectors/existing",
-            params={"prefix": "http://www.ontotext.com/connectors/retrieval#"},
-            headers={
-                "Accept": "application/json",
-                "X-GraphDB-Repository": self.__repository_id,
-            },
+        sparql_result, _ = self.eval_sparql_query(
+            "PREFIX retr: <http://www.ontotext.com/connectors/retrieval#> "
+            "SELECT ?connector { [] retr:listConnectors ?connector . }",
+            validation=False
         )
-        return connector_name in {connector["name"] for connector in response.json()}
+        existing_connectors = set()
+        for bindings in sparql_result["results"]["bindings"]:
+            if "connector" in bindings:
+                existing_connectors.add(bindings["connector"]["value"])
+        return connector_name in existing_connectors
 
     @cached_property
     def version(self) -> str:
