@@ -1,8 +1,9 @@
 from unittest.mock import MagicMock
 
-from langchain_core.language_models import FakeMessagesListChatModel, BaseChatModel
+from langchain.agents import create_agent
+from langchain_core.language_models import FakeMessagesListChatModel
 from langchain_core.messages import AIMessage
-from langgraph.prebuilt import create_react_agent
+from langgraph.graph.state import CompiledStateGraph
 from langsmith.schemas import UsageMetadata
 
 from ttyg.agents import run_agent_for_evaluation
@@ -14,10 +15,9 @@ def test_run_agent_for_evaluation_status_success():
         AIMessage(content=answer,
                   usage_metadata=UsageMetadata(input_tokens=100, output_tokens=50, total_tokens=150))
     ])
-    agent = create_react_agent(
+    agent = create_agent(
         model=chat_model,
-        tools=[],
-        prompt="You are a helpful assistant"
+        system_prompt="You are a helpful assistant"
     )
     question_id = "question-123"
     messages = {"messages": [("user", "What's the weather in Sofia today?")]}
@@ -33,15 +33,10 @@ def test_run_agent_for_evaluation_status_success():
 
 
 def test_run_agent_for_evaluation_status_error():
-    chat_model = MagicMock(spec=BaseChatModel)
+    agent = MagicMock(spec=CompiledStateGraph)
     error_message = "Some error"
-    chat_model.invoke.side_effect = RuntimeError(error_message)
+    agent.invoke.side_effect = RuntimeError(error_message)
 
-    agent = create_react_agent(
-        model=chat_model,
-        tools=[],
-        prompt="You are Aragorn."
-    )
     question_id = "question-42"
     messages = {"messages": [("user", "Where was Gondor when the Westfold fell?")]}
     response = run_agent_for_evaluation(agent, question_id, messages)
