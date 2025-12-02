@@ -1,12 +1,12 @@
 import json
 import logging
 from typing import (
-    Optional,
     Type,
     Tuple,
 )
 
 from langchain_core.callbacks import CallbackManagerForToolRun
+from langchain_core.tools import ToolException
 from pydantic import BaseModel, Field
 
 from ttyg.utils import timeit
@@ -30,10 +30,13 @@ class SparqlQueryTool(BaseGraphDBTool):
 
     @timeit
     def _run(
-            self,
-            query: str,
-            run_manager: Optional[CallbackManagerForToolRun] = None,
+        self,
+        query: str,
+        run_manager: CallbackManagerForToolRun | None = None,
     ) -> Tuple[str, str]:
-        logging.debug(f"Executing generated SPARQL query {query}")
-        query_results, actual_query = self.graph.eval_sparql_query(query)
-        return json.dumps(query_results, indent=2), actual_query
+        try:
+            logging.debug(f"Executing generated SPARQL query {query}")
+            query_results, actual_query = self.graph.eval_sparql_query(query)
+            return json.dumps(query_results, indent=2), actual_query
+        except Exception as e:
+            raise ToolException(str(e))

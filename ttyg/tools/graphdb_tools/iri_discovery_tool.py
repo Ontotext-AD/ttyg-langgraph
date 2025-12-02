@@ -2,13 +2,13 @@ import json
 import logging
 from typing import (
     Any,
-    Optional,
     ClassVar,
     Type,
     Tuple,
 )
 
 from langchain_core.callbacks import CallbackManagerForToolRun
+from langchain_core.tools import ToolException
 from pydantic import Field, model_validator, BaseModel
 from typing_extensions import Self
 
@@ -66,7 +66,7 @@ class IRIDiscoveryTool(BaseGraphDBTool):
 
     min_graphdb_version: ClassVar[str] = "10.1"
     name: str = "iri_discovery"
-    description: str = "Discovery IRIs by full-text search in labels."
+    description: str = "Discover IRIs by full-text search in labels."
     args_schema: Type[BaseModel] = SearchInput
     response_format: str = "content_and_artifact"
     query_template: str = Field(default_factory=lambda validated_data: _get_default_sparql_template(validated_data))
@@ -91,11 +91,14 @@ class IRIDiscoveryTool(BaseGraphDBTool):
 
     @timeit
     def _run(
-            self,
-            query: str,
-            run_manager: Optional[CallbackManagerForToolRun] = None,
+        self,
+        query: str,
+        run_manager: CallbackManagerForToolRun | None = None,
     ) -> Tuple[str, str]:
-        query = self.query_template.format(query=query, limit=self.limit)
-        logging.debug(f"Searching with iri discovery {query}")
-        query_results, query = self.graph.eval_sparql_query(query, validation=False)
-        return json.dumps(query_results, indent=2), query
+        try:
+            query = self.query_template.format(query=query, limit=self.limit)
+            logging.debug(f"Searching with iri discovery {query}")
+            query_results, query = self.graph.eval_sparql_query(query, validation=False)
+            return json.dumps(query_results, indent=2), query
+        except Exception as e:
+            raise ToolException(str(e))

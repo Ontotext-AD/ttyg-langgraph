@@ -1,13 +1,13 @@
 import json
 import logging
 from typing import (
-    Optional,
     ClassVar,
     Type,
     Tuple,
 )
 
 from langchain_core.callbacks import CallbackManagerForToolRun
+from langchain_core.tools import ToolException
 from pydantic import Field, model_validator, BaseModel
 from typing_extensions import Self
 
@@ -58,16 +58,19 @@ class SimilaritySearchQueryTool(BaseGraphDBTool):
 
     @timeit
     def _run(
-            self,
-            query: str,
-            run_manager: Optional[CallbackManagerForToolRun] = None,
+        self,
+        query: str,
+        run_manager: CallbackManagerForToolRun | None = None,
     ) -> Tuple[str, str]:
-        query = self.sparql_query_template.format(
-            index_name=self.index_name,
-            query=query,
-            limit=self.limit,
-            similarity_score_threshold=self.similarity_score_threshold,
-        )
-        logging.debug(f"Searching with similarity query {query}")
-        query_results = self.graph.eval_sparql_query(query, validation=False)
-        return json.dumps(query_results, indent=2), query
+        try:
+            query = self.sparql_query_template.format(
+                index_name=self.index_name,
+                query=query,
+                limit=self.limit,
+                similarity_score_threshold=self.similarity_score_threshold,
+            )
+            logging.debug(f"Searching with similarity query {query}")
+            query_results = self.graph.eval_sparql_query(query, validation=False)
+            return json.dumps(query_results, indent=2), query
+        except Exception as e:
+            raise ToolException(str(e))

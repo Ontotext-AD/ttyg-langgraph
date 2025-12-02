@@ -1,13 +1,13 @@
 import logging
 from typing import (
     Any,
-    Optional,
     ClassVar,
     Type,
     Tuple,
 )
 
 from langchain_core.callbacks import CallbackManagerForToolRun
+from langchain_core.tools import ToolException
 from pydantic import Field, model_validator, BaseModel
 from typing_extensions import Self
 
@@ -94,11 +94,14 @@ class FTSTool(BaseGraphDBTool):
 
     @timeit
     def _run(
-            self,
-            query: str,
-            run_manager: Optional[CallbackManagerForToolRun] = None,
+        self,
+        query: str,
+        run_manager: CallbackManagerForToolRun | None = None,
     ) -> Tuple[str, str]:
-        query = self.query_template.format(query=query, limit=self.limit)
-        logging.debug(f"Searching with FTS query {query}")
-        query_results, query = self.graph.eval_sparql_query(query, validation=False)
-        return query_results, query
+        try:
+            query = self.query_template.format(query=query, limit=self.limit)
+            logging.debug(f"Searching with FTS query {query}")
+            query_results, query = self.graph.eval_sparql_query(query, validation=False)
+            return query_results, query
+        except Exception as e:
+            raise ToolException(str(e))

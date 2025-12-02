@@ -1,5 +1,4 @@
 from abc import ABCMeta
-from typing import Optional
 
 from langchain_core.tools import BaseTool
 from pydantic import model_validator
@@ -13,9 +12,10 @@ class BaseGraphDBTool(BaseTool, metaclass=ABCMeta):
 
     graph: GraphDB
     """The GraphDB Client"""
+    handle_tool_error: bool = True
 
     @property
-    def min_graphdb_version(self) -> Optional[str]:
+    def min_graphdb_version(self) -> str | None:
         """
         :return: the minimum GraphDB version required to use the tool
         :rtype: str
