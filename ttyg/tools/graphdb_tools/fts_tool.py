@@ -58,9 +58,9 @@ class FTSTool(BaseGraphDBTool):
     """
     Tool, which uses GraphDB full-text search (FTS).
     The full-text search (FTS) must be enabled for the repository in order to use this tool.
-    For details how to enable it check the documentation https://graphdb.ontotext.com/documentation/10.8/full-text-search.html#simple-full-text-search-index .
+    For details how to enable it check the documentation https://graphdb.ontotext.com/documentation/11.2/full-text-search.html#simple-full-text-search-index .
     It's also recommended to compute the RDF rank for the repository.
-    For details how to compute it refer to the documentation https://graphdb.ontotext.com/documentation/10.8/ranking-results.html .
+    For details how to compute it refer to the documentation https://graphdb.ontotext.com/documentation/11.2/ranking-results.html .
     The agent generates the fts search query, which is expanded in the SPARQL template.
     """
 

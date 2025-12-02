@@ -1,6 +1,6 @@
 [project]
 name = "ttyg"
-version = "1.10.1a0"
+version = "2.0.0"
 description = "Natural language querying for GraphDB using LangGraph agents"
 authors = []
 readme = "README.md"
@@ -8,15 +8,16 @@ license = "Apache-2.0"
 requires-python = ">=3.12,<3.14"
 dependencies = [
     "sparqlwrapper==2.0.0",
-    "langgraph==0.6.6",
+    "langchain==1.1.0",
+    "langgraph==1.0.4",
 ]
 
 [project.urls]
 repository = "https://github.com/Ontotext-AD/ttyg-langgraph"
 
 [tool.poetry.group.test.dependencies]
-pytest = "<9,>=8"
-pytest-cov = "<7,>=6"
+pytest = "<10,>=9"
+pytest-cov = "<8,>=7"
 
 [tool.poetry.group.jupyter.dependencies]
 jupyter = "1.1.1"
@@ -28,19 +29,13 @@ optional = true
 optional = true
 
 [tool.poetry.group.llm-openai.dependencies]
-langchain-openai = "0.3.32"
-
-[tool.poetry.group.llm-databricks]
-optional = true
-
-[tool.poetry.group.llm-databricks.dependencies]
-databricks-langchain = "0.7.1"
+langchain-openai = "1.1.0"
 
 [tool.poetry.group.llm-anthropic]
 optional = true
 
 [tool.poetry.group.llm-anthropic.dependencies]
-langchain-anthropic = "0.3.19"
+langchain-anthropic = "1.2.0"
 
 [build-system]
 requires = ["poetry-core>=2.0.0"]
