@@ -1,13 +1,13 @@
 import json
 import logging
 from typing import (
-    Optional,
     ClassVar,
     Type,
     Tuple,
 )
 
 from langchain_core.callbacks import CallbackManagerForToolRun
+from langchain_core.tools import ToolException
 from pydantic import Field, model_validator, BaseModel
 from typing_extensions import Self
 
@@ -24,8 +24,8 @@ class RetrievalQueryTool(BaseGraphDBTool):
 
     class SearchInput(BaseModel):
         query: str = Field(description="text query")
-        limit: Optional[int] = Field(description="limit the results", default=5, ge=1)
-        score: Optional[float] = Field(description="filter the results by score", default=0, ge=0, le=1)
+        limit: int | None = Field(description="limit the results", default=5, ge=1)
+        score: float | None = Field(description="filter the results by score", default=0, ge=0, le=1)
 
     min_graphdb_version: ClassVar[str] = "10.4"
     name: str = "retrieval_search"
@@ -57,18 +57,21 @@ class RetrievalQueryTool(BaseGraphDBTool):
 
     @timeit
     def _run(
-            self,
-            query: str,
-            limit: Optional[int] = 5,
-            score: Optional[float] = 0,
-            run_manager: Optional[CallbackManagerForToolRun] = None,
+        self,
+        query: str,
+        limit: int | None = 5,
+        score: float | None = 0,
+        run_manager: CallbackManagerForToolRun | None = None,
     ) -> Tuple[str, str]:
-        query = self.sparql_query_template.format(
-            connector_name=self.connector_name,
-            query=query,
-            limit=limit,
-            score=score,
-        )
-        logging.debug(f"Searching with retrieval query {query}")
-        query_results = self.graph.eval_sparql_query(query, validation=False)
-        return json.dumps(query_results, indent=2), query
+        try:
+            query = self.sparql_query_template.format(
+                connector_name=self.connector_name,
+                query=query,
+                limit=limit,
+                score=score,
+            )
+            logging.debug(f"Searching with retrieval query {query}")
+            query_results = self.graph.eval_sparql_query(query, validation=False)
+            return json.dumps(query_results, indent=2), query
+        except Exception as e:
+            raise ToolException(str(e))

@@ -1,9 +1,9 @@
 import logging
 from functools import cached_property
 from pathlib import Path
-from typing import Optional
 
 from langchain_core.callbacks import CallbackManagerForToolRun
+from langchain_core.tools import ToolException
 from pydantic import model_validator, computed_field
 from pyparsing import ParseException
 from rdflib import Graph
@@ -23,8 +23,8 @@ class OntologySchemaAndVocabularyTool(BaseGraphDBTool):
 
     name: str = "ontology_schema_and_vocabulary_tool"
     description: str = "Tool, which returns the configured ontology schema and vocabulary for the SPARQL queries"
-    ontology_schema_file_path: Optional[Path] = None
-    ontology_schema_query: Optional[str] = None
+    ontology_schema_file_path: Path | None = None
+    ontology_schema_query: str | None = None
 
     @model_validator(mode="after")
     def valid_ontology_query(self) -> Self:
@@ -80,7 +80,10 @@ class OntologySchemaAndVocabularyTool(BaseGraphDBTool):
 
     @timeit
     def _run(
-            self,
-            run_manager: Optional[CallbackManagerForToolRun] = None,
+        self,
+        run_manager: CallbackManagerForToolRun | None = None,
     ) -> str:
-        return self.schema_graph.serialize(format="turtle")
+        try:
+            return self.schema_graph.serialize(format="turtle")
+        except Exception as e:
+            raise ToolException(str(e))

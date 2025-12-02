@@ -1,6 +1,7 @@
 import json
 
 import pytest
+from langchain_core.tools import ToolException
 
 from ttyg.graphdb import GraphDB
 from ttyg.tools import AutocompleteSearchTool
@@ -73,7 +74,7 @@ def test_result_class_is_prefixed_with_unknown_prefix(graphdb: GraphDB) -> None:
     autocomplete_search_tool = AutocompleteSearchTool(
         graph=graphdb,
     )
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ToolException) as exc:
         autocomplete_search_tool._run(
             query="Skywalker",
             result_class="unknown:Human",
@@ -87,7 +88,7 @@ def test_property_path_is_syntactically_wrong(graphdb: GraphDB) -> None:
         graph=graphdb,
         property_path="http://schema.org/name",
     )
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ToolException) as exc:
         autocomplete_search_tool._run(
             query="Skywalker",
             limit=5,
@@ -121,7 +122,7 @@ def test_property_path_with_two_properties_which_are_prefixed(graphdb: GraphDB) 
         graph=graphdb,
         property_path="rdfs:label | schema:name",
     )
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ToolException) as exc:
         autocomplete_search_tool._run(
             query="Skywalker",
             limit=5,
@@ -134,7 +135,7 @@ def test_property_path_is_prefixed_with_unknown_prefix(graphdb: GraphDB) -> None
         graph=graphdb,
         property_path="unknown:label",
     )
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ToolException) as exc:
         autocomplete_search_tool._run(
             query="Skywalker",
             limit=5,

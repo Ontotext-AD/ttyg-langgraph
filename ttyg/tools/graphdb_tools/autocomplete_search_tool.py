@@ -1,12 +1,12 @@
 import json
 import logging
 from typing import (
-    Optional,
     Type,
     Tuple,
 )
 
 from langchain_core.callbacks import CallbackManagerForToolRun
+from langchain_core.tools import ToolException
 from pydantic import Field, model_validator, BaseModel
 from typing_extensions import Self
 
@@ -23,11 +23,11 @@ class AutocompleteSearchTool(BaseGraphDBTool):
 
     class SearchInput(BaseModel):
         query: str = Field(description="autocomplete search query")
-        result_class: Optional[str] = Field(
+        result_class: str | None = Field(
             description="Optionally, filter the results by class. ",
             default=None,
         )
-        limit: Optional[int] = Field(description="limit the results", default=10, ge=1)
+        limit: int | None = Field(description="limit the results", default=10, ge=1)
 
     name: str = "autocomplete_search"
     description: str = "Discover IRIs by searching their names and getting results in order of relevance."
@@ -68,18 +68,21 @@ class AutocompleteSearchTool(BaseGraphDBTool):
 
     @timeit
     def _run(
-            self,
-            query: str,
-            limit: Optional[int] = 10,
-            result_class: Optional[str] = None,
-            run_manager: Optional[CallbackManagerForToolRun] = None,
+        self,
+        query: str,
+        limit: int | None = 10,
+        result_class: str | None = None,
+        run_manager: CallbackManagerForToolRun | None = None,
     ) -> Tuple[str, str]:
-        query = self.sparql_query_template.format(
-            query=query,
-            property_path=self.property_path,
-            filter_clause=f" a {result_class} ;" if result_class else "",
-            limit=limit,
-        )
-        logging.debug(f"Searching with autocomplete query {query}")
-        query_results, query = self.graph.eval_sparql_query(query)
-        return json.dumps(query_results, indent=2), query
+        try:
+            query = self.sparql_query_template.format(
+                query=query,
+                property_path=self.property_path,
+                filter_clause=f" a {result_class} ;" if result_class else "",
+                limit=limit,
+            )
+            logging.debug(f"Searching with autocomplete query {query}")
+            query_results, query = self.graph.eval_sparql_query(query)
+            return json.dumps(query_results, indent=2), query
+        except Exception as e:
+            raise ToolException(str(e))

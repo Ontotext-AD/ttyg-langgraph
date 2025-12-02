@@ -3,7 +3,7 @@ import re
 import threading
 from enum import Enum
 from functools import cached_property
-from typing import Optional, Tuple, Any
+from typing import Tuple, Any
 
 import pyparsing
 import requests
@@ -43,7 +43,7 @@ class GraphDB:
         connect_timeout: int = 2,
         read_timeout: int = 10,
         sparql_timeout: int = 15,
-        auth_header: Optional[str] = None,
+        auth_header: str | None = None,
     ):
         """
         Initializes a GraphDB Client.
@@ -59,7 +59,7 @@ class GraphDB:
         :param sparql_timeout: timeout in seconds for calls to the SPARQL endpoint, default = 15
         :type sparql_timeout: int
         :param auth_header: optional, the value of the "Authorization" header to pass to GraphDB, if it's secured
-        :type auth_header: Optional[str]
+        :type auth_header: str | None
         """
 
         self.__base_url = base_url
