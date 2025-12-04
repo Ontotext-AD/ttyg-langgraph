@@ -14,6 +14,7 @@ from typing_extensions import Self
 from ttyg.graphdb import GraphDB, GraphDBRdfRankStatus
 from ttyg.utils import timeit
 from .base import BaseGraphDBTool
+from .sparql_query_artifact import SparqlQueryArtifact
 
 
 def _get_default_sparql_template(validated_data: dict[str, Any]) -> str:
@@ -97,11 +98,11 @@ class FTSTool(BaseGraphDBTool):
         self,
         query: str,
         run_manager: CallbackManagerForToolRun | None = None,
-    ) -> Tuple[str, str]:
+    ) -> Tuple[str, SparqlQueryArtifact]:
         try:
             query = self.query_template.format(query=query, limit=self.limit)
             logging.debug(f"Searching with FTS query {query}")
-            query_results, query = self.graph.eval_sparql_query(query, validation=False)
-            return query_results, query
+            query_results, actual_query = self.graph.eval_sparql_query(query, validation=False)
+            return query_results, SparqlQueryArtifact(query=actual_query)
         except Exception as e:
             raise ToolException(str(e))
