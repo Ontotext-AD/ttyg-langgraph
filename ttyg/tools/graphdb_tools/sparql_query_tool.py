@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field
 
 from ttyg.utils import timeit
 from .base import BaseGraphDBTool
+from .sparql_query_artifact import SparqlQueryArtifact
 
 
 class SparqlQueryTool(BaseGraphDBTool):
@@ -33,10 +34,10 @@ class SparqlQueryTool(BaseGraphDBTool):
         self,
         query: str,
         run_manager: CallbackManagerForToolRun | None = None,
-    ) -> Tuple[str, str]:
+    ) -> Tuple[str, SparqlQueryArtifact]:
         try:
             logging.debug(f"Executing generated SPARQL query {query}")
             query_results, actual_query = self.graph.eval_sparql_query(query)
-            return json.dumps(query_results, indent=2), actual_query
+            return json.dumps(query_results, indent=2), SparqlQueryArtifact(query=actual_query)
         except Exception as e:
             raise ToolException(str(e))

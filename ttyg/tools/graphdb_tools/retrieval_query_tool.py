@@ -13,6 +13,7 @@ from typing_extensions import Self
 
 from ttyg.utils import timeit
 from .base import BaseGraphDBTool
+from .sparql_query_artifact import SparqlQueryArtifact
 
 
 class RetrievalQueryTool(BaseGraphDBTool):
@@ -62,7 +63,7 @@ class RetrievalQueryTool(BaseGraphDBTool):
         limit: int | None = 5,
         score: float | None = 0,
         run_manager: CallbackManagerForToolRun | None = None,
-    ) -> Tuple[str, str]:
+    ) -> Tuple[str, SparqlQueryArtifact]:
         try:
             query = self.sparql_query_template.format(
                 connector_name=self.connector_name,
@@ -71,7 +72,7 @@ class RetrievalQueryTool(BaseGraphDBTool):
                 score=score,
             )
             logging.debug(f"Searching with retrieval query {query}")
-            query_results = self.graph.eval_sparql_query(query, validation=False)
-            return json.dumps(query_results, indent=2), query
+            query_results, actual_query = self.graph.eval_sparql_query(query, validation=False)
+            return json.dumps(query_results, indent=2), SparqlQueryArtifact(query=actual_query)
         except Exception as e:
             raise ToolException(str(e))

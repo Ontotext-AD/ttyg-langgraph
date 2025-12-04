@@ -22,7 +22,7 @@ def test_result_class_filter(graphdb: GraphDB) -> None:
     autocomplete_search_tool = AutocompleteSearchTool(
         graph=graphdb,
     )
-    results, query = autocomplete_search_tool._run(
+    results, artifact = autocomplete_search_tool._run(
         query="Skywalker",
         limit=5,
     )
@@ -35,9 +35,9 @@ def test_result_class_filter(graphdb: GraphDB) -> None:
             rank:hasRDFRank5 ?rank.
     }
     ORDER BY DESC(?rank)
-    LIMIT 5""" == query
+    LIMIT 5""" == artifact.query
 
-    results, query = autocomplete_search_tool._run(
+    results, artifact = autocomplete_search_tool._run(
         query="Skywalker",
         result_class="voc:Human",
         limit=5,
@@ -51,9 +51,9 @@ def test_result_class_filter(graphdb: GraphDB) -> None:
             rank:hasRDFRank5 ?rank.
     }
     ORDER BY DESC(?rank)
-    LIMIT 5""" == query
+    LIMIT 5""" == artifact.query
 
-    results, query = autocomplete_search_tool._run(
+    results, artifact = autocomplete_search_tool._run(
         query="Skywalker",
         result_class="voc:Aleena",
         limit=5,
@@ -67,7 +67,7 @@ def test_result_class_filter(graphdb: GraphDB) -> None:
             rank:hasRDFRank5 ?rank.
     }
     ORDER BY DESC(?rank)
-    LIMIT 5""" == query
+    LIMIT 5""" == artifact.query
 
 
 def test_result_class_is_prefixed_with_unknown_prefix(graphdb: GraphDB) -> None:
@@ -101,7 +101,7 @@ def test_property_path_is_prefixed(graphdb: GraphDB) -> None:
         graph=graphdb,
         property_path="rdfs:label",
     )
-    results, query = autocomplete_search_tool._run(
+    results, artifact = autocomplete_search_tool._run(
         query="Skywalker",
         limit=5,
     )
@@ -114,7 +114,7 @@ def test_property_path_is_prefixed(graphdb: GraphDB) -> None:
             rank:hasRDFRank5 ?rank.
     }
     ORDER BY DESC(?rank)
-    LIMIT 5""" == query
+    LIMIT 5""" == artifact.query
 
 
 def test_property_path_with_two_properties_which_are_prefixed(graphdb: GraphDB) -> None:
