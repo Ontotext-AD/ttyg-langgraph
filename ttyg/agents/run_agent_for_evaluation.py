@@ -1,4 +1,5 @@
 import time
+from datetime import datetime, timezone
 from typing import Any
 
 from langchain_core.messages import AIMessage, ToolMessage, ToolCall
@@ -7,9 +8,9 @@ from langgraph.graph.state import CompiledStateGraph
 
 
 def run_agent_for_evaluation(
-        agent: CompiledStateGraph,
-        question_id: str,
-        input_: dict[str, Any] | Any,
+    agent: CompiledStateGraph,
+    question_id: str,
+    input_: dict[str, Any] | Any,
 ) -> dict[str, Any]:
     """
     Runs an agent over a given question and returns the output as expected by the evaluation library https://github.com/Ontotext-AD/graphrag-eval.
@@ -46,7 +47,8 @@ def run_agent_for_evaluation(
             elif isinstance(message, ToolMessage):
                 tools_outputs[message.tool_call_id] = {
                     "status": message.status,
-                    "output": message.content
+                    "output": message.content,
+                    "execution_timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
                 }
 
         for tool_call in tools_calls:
