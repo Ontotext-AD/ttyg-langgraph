@@ -32,19 +32,19 @@ class SimilaritySearchQueryTool(BaseGraphDBTool):
     args_schema: Type[BaseModel] = SearchInput
     response_format: str = "content_and_artifact"
     sparql_query_template: str = """PREFIX sim: <http://www.ontotext.com/graphdb/similarity/>
-    PREFIX sim-index: <http://www.ontotext.com/graphdb/similarity/instance/>
-    DESCRIBE ?documentID {{
-        SELECT DISTINCT ?documentID {{
-            ?search a sim-index:{index_name} ;
-                sim:searchTerm "{query}";
-                sim:documentResult ?result .
-            ?result sim:value ?documentID ;
-                sim:score ?score.
-            FILTER(?score >= {similarity_score_threshold})
-        }}
-        ORDER BY DESC(?score)
-        LIMIT {limit}
-    }}"""
+PREFIX sim-index: <http://www.ontotext.com/graphdb/similarity/instance/>
+DESCRIBE ?documentID {{
+    SELECT DISTINCT ?documentID {{
+        ?search a sim-index:{index_name} ;
+            sim:searchTerm "{query}";
+            sim:documentResult ?result .
+        ?result sim:value ?documentID ;
+            sim:score ?score.
+        FILTER(?score >= {similarity_score_threshold})
+    }}
+    ORDER BY DESC(?score)
+    LIMIT {limit}
+}}"""
     limit: int = Field(default=10, ge=1)
     similarity_score_threshold: float = Field(default=0.6, ge=0)
     index_name: str

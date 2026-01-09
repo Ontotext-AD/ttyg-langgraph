@@ -35,14 +35,14 @@ class AutocompleteSearchTool(BaseGraphDBTool):
     args_schema: Type[BaseModel] = SearchInput
     response_format: str = "content_and_artifact"
     sparql_query_template: str = """PREFIX rank: <http://www.ontotext.com/owlim/RDFRank#>
-    PREFIX auto: <http://www.ontotext.com/plugins/autocomplete#>
-    SELECT ?iri ?name ?rank {{
-        ?iri auto:query "{query}" ;
-            {property_path} ?name ;{filter_clause}
-            rank:hasRDFRank5 ?rank.
-    }}
-    ORDER BY DESC(?rank)
-    LIMIT {limit}"""
+PREFIX auto: <http://www.ontotext.com/plugins/autocomplete#>
+SELECT ?iri ?name ?rank {{
+    ?iri auto:query "{query}" ;
+        {property_path} ?name ;{filter_clause}
+        rank:hasRDFRank5 ?rank.
+}}
+ORDER BY DESC(?rank)
+LIMIT {limit}"""
     property_path: str = Field(
         default="<http://www.w3.org/2000/01/rdf-schema#label>",
         examples=[

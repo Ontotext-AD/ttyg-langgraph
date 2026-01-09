@@ -248,6 +248,7 @@ class GraphDB:
         prefixed_iris = self.__get_prefixed_iris(query_part)
 
         query = self.__add_missing_prefixes(defined_prefixes, known_prefixes, prefixed_iris, query)
+        query = self.__add_new_lines_after_prefixes_if_missing(query)
 
         self.__validate_iris_are_stored(defined_prefixes, prefixed_iris, query_part)
 
@@ -448,6 +449,25 @@ class GraphDB:
             )
         )
         return iris
+
+    @staticmethod
+    def __add_new_lines_after_prefixes_if_missing(query: str) -> str:
+        # 1. Handle PREFIX spacing:
+        # Matches optional leading whitespace, the word PREFIX, the content,
+        # and any optional trailing horizontal space.
+        # Pattern: \s*(PREFIX\s+[^>]+>)[ \t]*
+        prefix_pattern = r"\s*(PREFIX\s+[^>]+>)[ \t]*"
+        # Replacement: Ensures the prefix starts on a new line (\n) with no leading spaces.
+        query = re.sub(prefix_pattern, r"\n\1\n", query, flags=re.IGNORECASE)
+
+        # 2. Clean up whitespace before the main query verb (SELECT|ASK|CONSTRUCT|DESCRIBE)
+        query_verbs = r"(?:SELECT|ASK|CONSTRUCT|DESCRIBE)"
+        verb_pattern = fr"\s+(?={query_verbs})"
+        query = re.sub(verb_pattern, r"\n", query, flags=re.IGNORECASE)
+
+        # 3. remove leading/trailing whitespace and collapse double newlines
+        query = query.strip()
+        return re.sub(r"\n+", "\n", query)
 
     def eval_sparql_query(
         self,

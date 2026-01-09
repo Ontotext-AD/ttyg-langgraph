@@ -41,7 +41,8 @@ def test_eval_sparql_query_select_query(sparql_query_tool: SparqlQueryTool) -> N
         "PREFIX voc: <https://swapi.co/vocabulary/> SELECT * { ?character voc:eyeColor \"red\"}"
     )
     assert 6 == len(json.loads(results)["results"]["bindings"])
-    assert "PREFIX voc: <https://swapi.co/vocabulary/> SELECT * { ?character voc:eyeColor \"red\"}" == artifact.query
+    assert ("PREFIX voc: <https://swapi.co/vocabulary/>\n"
+            "SELECT * { ?character voc:eyeColor \"red\"}") == artifact.query
 
 
 def test_eval_sparql_query_ask_query(sparql_query_tool: SparqlQueryTool) -> None:
@@ -49,7 +50,8 @@ def test_eval_sparql_query_ask_query(sparql_query_tool: SparqlQueryTool) -> None
         "PREFIX voc: <https://swapi.co/vocabulary/> ASK { ?character voc:eyeColor ?eyeColor}"
     )
     assert True == json.loads(results)["boolean"]
-    assert "PREFIX voc: <https://swapi.co/vocabulary/> ASK { ?character voc:eyeColor ?eyeColor}" == artifact.query
+    assert ("PREFIX voc: <https://swapi.co/vocabulary/>\n"
+            "ASK { ?character voc:eyeColor ?eyeColor}") == artifact.query
 
 
 def test_eval_sparql_query_missing_known_prefix_is_added(sparql_query_tool: SparqlQueryTool) -> None:
@@ -57,7 +59,8 @@ def test_eval_sparql_query_missing_known_prefix_is_added(sparql_query_tool: Spar
         "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> SELECT * { ?character voc:eyeColor \"red\"}"
     )
     assert 6 == len(json.loads(results)["results"]["bindings"])
-    assert ("PREFIX voc: <https://swapi.co/vocabulary/> PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> "
+    assert ("PREFIX voc: <https://swapi.co/vocabulary/>\n"
+            "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n"
             "SELECT * { ?character voc:eyeColor \"red\"}") == artifact.query
 
 
@@ -74,7 +77,8 @@ def test_eval_sparql_query_wrong_prefix_is_fixed(sparql_query_tool: SparqlQueryT
         "PREFIX voc: <https://swapi.co/voc/> SELECT * { ?character voc:eyeColor \"red\"}"
     )
     assert 6 == len(json.loads(results)["results"]["bindings"])
-    assert "PREFIX voc: <https://swapi.co/vocabulary/> SELECT * { ?character voc:eyeColor \"red\"}" == artifact.query
+    assert ("PREFIX voc: <https://swapi.co/vocabulary/>\n"
+            "SELECT * { ?character voc:eyeColor \"red\"}") == artifact.query
 
 
 def test_eval_sparql_query_iri_which_is_not_stored(sparql_query_tool: SparqlQueryTool) -> None:
