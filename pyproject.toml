@@ -1,6 +1,6 @@
 [project]
 name = "ttyg"
-version = "3.0.1a0"
+version = "3.1.0"
 description = "Natural language querying for GraphDB using LangGraph agents"
 authors = []
 readme = "README.md"
@@ -8,8 +8,8 @@ license = "Apache-2.0"
 requires-python = ">=3.12,<3.14"
 dependencies = [
     "sparqlwrapper==2.0.0",
-    "langchain==1.1.0",
-    "langgraph==1.0.4",
+    "langchain==1.2.3",
+    "langgraph==1.0.5",
 ]
 
 [project.urls]

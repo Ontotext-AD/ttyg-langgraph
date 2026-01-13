@@ -28,14 +28,14 @@ def test_result_class_filter(graphdb: GraphDB) -> None:
     )
     assert 5 == len(json.loads(results)["results"]["bindings"])
     assert """PREFIX rank: <http://www.ontotext.com/owlim/RDFRank#>
-    PREFIX auto: <http://www.ontotext.com/plugins/autocomplete#>
-    SELECT ?iri ?name ?rank {
-        ?iri auto:query "Skywalker" ;
-            <http://www.w3.org/2000/01/rdf-schema#label> ?name ;
-            rank:hasRDFRank5 ?rank.
-    }
-    ORDER BY DESC(?rank)
-    LIMIT 5""" == artifact.query
+PREFIX auto: <http://www.ontotext.com/plugins/autocomplete#>
+SELECT ?iri ?name ?rank {
+    ?iri auto:query "Skywalker" ;
+        <http://www.w3.org/2000/01/rdf-schema#label> ?name ;
+        rank:hasRDFRank5 ?rank.
+}
+ORDER BY DESC(?rank)
+LIMIT 5""" == artifact.query
 
     results, artifact = autocomplete_search_tool._run(
         query="Skywalker",
@@ -43,15 +43,16 @@ def test_result_class_filter(graphdb: GraphDB) -> None:
         limit=5,
     )
     assert 5 == len(json.loads(results)["results"]["bindings"])
-    assert """PREFIX voc: <https://swapi.co/vocabulary/> PREFIX rank: <http://www.ontotext.com/owlim/RDFRank#>
-    PREFIX auto: <http://www.ontotext.com/plugins/autocomplete#>
-    SELECT ?iri ?name ?rank {
-        ?iri auto:query "Skywalker" ;
-            <http://www.w3.org/2000/01/rdf-schema#label> ?name ; a voc:Human ;
-            rank:hasRDFRank5 ?rank.
-    }
-    ORDER BY DESC(?rank)
-    LIMIT 5""" == artifact.query
+    assert """PREFIX voc: <https://swapi.co/vocabulary/>
+PREFIX rank: <http://www.ontotext.com/owlim/RDFRank#>
+PREFIX auto: <http://www.ontotext.com/plugins/autocomplete#>
+SELECT ?iri ?name ?rank {
+    ?iri auto:query "Skywalker" ;
+        <http://www.w3.org/2000/01/rdf-schema#label> ?name ; a voc:Human ;
+        rank:hasRDFRank5 ?rank.
+}
+ORDER BY DESC(?rank)
+LIMIT 5""" == artifact.query
 
     results, artifact = autocomplete_search_tool._run(
         query="Skywalker",
@@ -59,15 +60,16 @@ def test_result_class_filter(graphdb: GraphDB) -> None:
         limit=5,
     )
     assert 0 == len(json.loads(results)["results"]["bindings"])
-    assert """PREFIX voc: <https://swapi.co/vocabulary/> PREFIX rank: <http://www.ontotext.com/owlim/RDFRank#>
-    PREFIX auto: <http://www.ontotext.com/plugins/autocomplete#>
-    SELECT ?iri ?name ?rank {
-        ?iri auto:query "Skywalker" ;
-            <http://www.w3.org/2000/01/rdf-schema#label> ?name ; a voc:Aleena ;
-            rank:hasRDFRank5 ?rank.
-    }
-    ORDER BY DESC(?rank)
-    LIMIT 5""" == artifact.query
+    assert """PREFIX voc: <https://swapi.co/vocabulary/>
+PREFIX rank: <http://www.ontotext.com/owlim/RDFRank#>
+PREFIX auto: <http://www.ontotext.com/plugins/autocomplete#>
+SELECT ?iri ?name ?rank {
+    ?iri auto:query "Skywalker" ;
+        <http://www.w3.org/2000/01/rdf-schema#label> ?name ; a voc:Aleena ;
+        rank:hasRDFRank5 ?rank.
+}
+ORDER BY DESC(?rank)
+LIMIT 5""" == artifact.query
 
 
 def test_result_class_is_prefixed_with_unknown_prefix(graphdb: GraphDB) -> None:
@@ -93,7 +95,7 @@ def test_property_path_is_syntactically_wrong(graphdb: GraphDB) -> None:
             query="Skywalker",
             limit=5,
         )
-    assert "Expected SelectQuery, found 'http'  (at char 199), (line:5, col:13)" == str(exc.value)
+    assert "Expected SelectQuery, found 'http'  (at char 183), (line:5, col:9)" == str(exc.value)
 
 
 def test_property_path_is_prefixed(graphdb: GraphDB) -> None:
@@ -106,15 +108,16 @@ def test_property_path_is_prefixed(graphdb: GraphDB) -> None:
         limit=5,
     )
     assert 5 == len(json.loads(results)["results"]["bindings"])
-    assert """PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> PREFIX rank: <http://www.ontotext.com/owlim/RDFRank#>
-    PREFIX auto: <http://www.ontotext.com/plugins/autocomplete#>
-    SELECT ?iri ?name ?rank {
-        ?iri auto:query "Skywalker" ;
-            rdfs:label ?name ;
-            rank:hasRDFRank5 ?rank.
-    }
-    ORDER BY DESC(?rank)
-    LIMIT 5""" == artifact.query
+    assert """PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX rank: <http://www.ontotext.com/owlim/RDFRank#>
+PREFIX auto: <http://www.ontotext.com/plugins/autocomplete#>
+SELECT ?iri ?name ?rank {
+    ?iri auto:query "Skywalker" ;
+        rdfs:label ?name ;
+        rank:hasRDFRank5 ?rank.
+}
+ORDER BY DESC(?rank)
+LIMIT 5""" == artifact.query
 
 
 def test_property_path_with_two_properties_which_are_prefixed(graphdb: GraphDB) -> None:

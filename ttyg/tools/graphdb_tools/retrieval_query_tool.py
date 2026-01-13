@@ -34,18 +34,18 @@ class RetrievalQueryTool(BaseGraphDBTool):
     args_schema: Type[BaseModel] = SearchInput
     response_format: str = "content_and_artifact"
     sparql_query_template: str = """PREFIX retr: <http://www.ontotext.com/connectors/retrieval#>
-    PREFIX retr-inst: <http://www.ontotext.com/connectors/retrieval/instance#>
-    SELECT * {{
-        [] a retr-inst:{connector_name} ;
-            retr:query "{query}" ;
-            retr:limit {limit} ;
-            retr:entities ?entity .
-        ?entity retr:snippets _:s ;
-            retr:score ?score;
-        _:s retr:snippetField ?field ;
-            retr:snippetText ?text .
-        FILTER (?score > {score})
-    }}"""
+PREFIX retr-inst: <http://www.ontotext.com/connectors/retrieval/instance#>
+SELECT * {{
+    [] a retr-inst:{connector_name} ;
+        retr:query "{query}" ;
+        retr:limit {limit} ;
+        retr:entities ?entity .
+    ?entity retr:snippets _:s ;
+        retr:score ?score;
+    _:s retr:snippetField ?field ;
+        retr:snippetText ?text .
+    FILTER (?score > {score})
+}}"""
     connector_name: str
 
     @model_validator(mode="after")
