@@ -444,6 +444,8 @@ class GraphDB:
                               not x.startswith("http://spinrdf.org/spif#")
                           ) and (
                               not x.startswith("http://www.ontotext.com/fts")
+                          ) and (
+                              not x.startswith("http://www.ontotext.com/describe/outgoing")
                           ),
                 iris
             )
