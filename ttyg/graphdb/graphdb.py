@@ -3,13 +3,14 @@ import re
 import threading
 from enum import Enum
 from functools import cached_property
-from typing import Tuple, Any
+from typing import Tuple
 
+import httpx
 import pyparsing
-import requests
-from SPARQLWrapper import SPARQLWrapper, Wrapper, JSON, TURTLE
+from rdflib import Variable
+from rdflib.contrib.graphdb.client import GraphDBClient
 from rdflib.plugins import sparql
-from requests import Response
+from rdflib.query import Result
 
 
 class GraphDBRdfRankStatus(Enum):
@@ -32,126 +33,149 @@ class GraphDBAutocompleteStatus(Enum):
 
 
 class GraphDB:
-    """Ontotext GraphDB https://graphdb.ontotext.com/ Client"""
+    """Wrapper of rdflib GraphDB Client https://rdflib.readthedocs.io/en/stable/graphdb/"""
 
     _lock = threading.Lock()
 
     def __init__(
         self,
         base_url: str,
-        repository_id: str,
-        connect_timeout: int = 2,
-        read_timeout: int = 10,
-        sparql_timeout: int = 15,
+        connect_timeout: float = 2,
+        read_timeout: float = 10,
         auth_header: str | None = None,
     ):
         """
         Initializes a GraphDB Client.
 
-        :param base_url : GraphDB Base URL
+        :param base_url : The base URL of the GraphDB server
         :type base_url: str
-        :param repository_id: GraphDB Repository ID
-        :type repository_id: str
-        :param connect_timeout: connect timeout in seconds for calls to GraphDB REST API, default = 2
-        :type connect_timeout: int
-        :param read_timeout: read timeout in seconds for calls to GraphDB REST API, default = 10
-        :type read_timeout: int
-        :param sparql_timeout: timeout in seconds for calls to the SPARQL endpoint, default = 15
-        :type sparql_timeout: int
+        :param connect_timeout: connect timeout in seconds, default = 2
+        :type connect_timeout: float
+        :param read_timeout: read timeout in seconds, default = 10
+        :type read_timeout: float
         :param auth_header: optional, the value of the "Authorization" header to pass to GraphDB, if it's secured
         :type auth_header: str | None
         """
 
         self.__base_url = base_url
-        self.__repository_id = repository_id
-        self.__sparql_timeout = sparql_timeout
-        self.__connect_timeout = connect_timeout
-        self.__read_timeout = read_timeout
         self.__auth_header = auth_header
-
-        self.__check_connectivity()
-
-    def __new_sparql_wrapper(self) -> SPARQLWrapper:
-        wrapper = SPARQLWrapper(f"{self.__base_url}/repositories/{self.__repository_id}")
-        wrapper.setTimeout(self.__sparql_timeout)
-        if self.__auth_header:
-            wrapper.addCustomHttpHeader("Authorization", self.__auth_header)
-        return wrapper
-
-    def __check_connectivity(self):
-        self.eval_sparql_query(query="ASK {?s ?p ?o}", validation=False)
-
-    def __get_request(self, url: str, headers: dict, params=None) -> Response:
-        if self.__auth_header:
-            headers["Authorization"] = self.__auth_header
-
-        response = requests.get(
-            url,
-            params=params,
-            headers=headers,
-            timeout=(self.__connect_timeout, self.__read_timeout),
+        self.__graphdb_client = GraphDBClient(
+            base_url=base_url,
+            auth=auth_header,
+            timeout=httpx.Timeout((connect_timeout, read_timeout))
         )
-        response.raise_for_status()
-        return response
 
-    def get_known_prefixes(self) -> dict[str, str]:
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.__graphdb_client.close()
+
+    def health(self, repository_id: str, timeout: int = 5) -> dict:
+        """Repository health check.
+        The implementation from rdflib returns a boolean value, so we need to override it
+        to get the response body.
+
+        :param repository_id: GraphDB Repository ID
+        :type repository_id: str
+        :param timeout: A timeout parameter in seconds. If provided, the endpoint attempts
+                to retrieve the repository within this timeout. If not, the passive
+                check is performed.
+        :type timeout: int
+        :return: the response body
+        :rtype: dict
+
+        Raises:
+            RepositoryNotFoundError: If the repository is not found or the passive check failed.
+            RepositoryNotHealthyError: If the repository is not healthy.
         """
-        Fetch all namespace declaration info available in the repository.
+        try:
+            params = {"passive": str(timeout)}
+            response = self.__graphdb_client.http_client.get(
+                f"/repositories/{repository_id}/health", params=params
+            )
+            response.raise_for_status()
+            return response.json()
+        except httpx.HTTPStatusError as err:
+            if err.response.status_code == 404:
+                raise RepositoryNotFoundError(
+                    f"Repository {repository_id} not found."
+                )
+            raise RepositoryNotHealthyError(
+                f"Repository {repository_id} is not healthy. {err.response.status_code} - {err.response.text}"
+            )
 
-        :return: dictionary of prefix - namespace pairs,
-        which are returned by GraphDB /repositories/{repositoryID}/namespaces endpoint
-        :rtype: dict[str, str]
+    def eval_sparql_query(
+        self,
+        repository_id: str,
+        query: str,
+        validation: bool = True
+    ) -> Tuple[Result, str]:
         """
-        response = self.__get_request(
-            f"{self.__base_url}/repositories/{self.__repository_id}/namespaces",
-            headers={
-                "Accept": "application/sparql-results+json",
-            },
-        )
-        namespaces = dict()
-        for binding in response.json()["results"]["bindings"]:
-            namespaces[binding["prefix"]["value"]] = binding["namespace"]["value"]
-        return namespaces
+        Executes the provided SPARQL query against GraphDB.
 
-    def fts_is_enabled(self) -> bool:
+        :param repository_id: GraphDB Repository ID
+        :type repository_id: str
+        :param query: the SPARQL query, which should be evaluated
+        :type query: str
+        :param validation: should be True, if the SPARQL query is generated from a LLM, and should be validated.
+        The validation includes parsing of the query, checks for missing prefixes,
+         or usage of IRIs, which are not stored in GraphDB.
+        :type validation: bool
+        :return: the results of the query execution and the actual executed query
+        :rtype: Tuple[Result, str]
+        """
+        if validation:
+            query = self.__validate_query(repository_id, query)
+
+        return self.__graphdb_client.repositories.get(repository_id).query(query), query
+
+    def fts_is_enabled(self, repository_id: str) -> bool:
         """
         Checks if the full-text search (FTS) is enabled
         using the GraphDB REST API /rest/repositories/{repository_id} endpoint.
 
+        :param repository_id: GraphDB Repository ID
+        :type repository_id: str
         :return: True, if full-text search (FTS) is enabled; False, otherwise
         :rtype: bool
         """
         response = self.__get_request(
-            f"{self.__base_url}/rest/repositories/{self.__repository_id}",
+            f"{self.__base_url}/rest/repositories/{repository_id}",
             headers={
                 "Accept": "application/json",
             },
         )
         return response.json()["params"]["enableFtsIndex"]["value"].lower() == "true"
 
-    def get_autocomplete_status(self) -> GraphDBAutocompleteStatus:
+    def get_autocomplete_status(self, repository_id: str) -> GraphDBAutocompleteStatus:
         """
         Returns the status of the autocomplete index for the repository.
 
+        :param repository_id: GraphDB Repository ID
+        :type repository_id: str
         :rtype: GraphDBAutocompleteStatus
         """
         sparql_result, _ = self.eval_sparql_query(
+            repository_id,
             "PREFIX auto: <http://www.ontotext.com/plugins/autocomplete#> SELECT ?status { ?s auto:status ?status }",
             validation=False
         )
         try:
-            raw_value = sparql_result["results"]["bindings"][0]["status"]["value"]
+            raw_value = sparql_result.bindings[0][Variable("status")].value
             if raw_value in GraphDBAutocompleteStatus:
                 return GraphDBAutocompleteStatus[raw_value]
         except IndexError:
             return GraphDBAutocompleteStatus.ERROR
         return GraphDBAutocompleteStatus.ERROR
 
-    def similarity_index_exists(self, index_name: str) -> bool:
+    def similarity_index_exists(self, repository_id: str, index_name: str) -> bool:
         """
         Checks if a similarity index with the provided name exists
         using the GraphDB REST API /rest/similarity endpoint.
 
+        :param repository_id: GraphDB Repository ID
+        :type repository_id: str
         :param index_name: the similarity index name
         :type index_name: str
         :return: True, if the index exists; False, otherwise
@@ -161,30 +185,54 @@ class GraphDB:
             f"{self.__base_url}/rest/similarity",
             headers={
                 "Accept": "application/json",
-                "X-GraphDB-Repository": self.__repository_id,
+                "X-GraphDB-Repository": repository_id,
             },
         )
         return index_name in {index["name"] for index in response.json()}
 
-    def retrieval_connector_exists(self, connector_name: str) -> bool:
+    def retrieval_connector_exists(self, repository_id: str, connector_name: str) -> bool:
         """
         Checks if a ChatGPT Retrieval Plugin Connector with the provided name exists.
 
+        :param repository_id: GraphDB Repository ID
+        :type repository_id: str
         :param connector_name: the connector name
         :type connector_name: str
         :return: True, if the connector exists; False, otherwise
         :rtype: bool
         """
         sparql_result, _ = self.eval_sparql_query(
+            repository_id,
             "PREFIX retr: <http://www.ontotext.com/connectors/retrieval#> "
             "SELECT ?connector { [] retr:listConnectors ?connector . }",
             validation=False
         )
         existing_connectors = set()
-        for bindings in sparql_result["results"]["bindings"]:
-            if "connector" in bindings:
-                existing_connectors.add(bindings["connector"]["value"])
+        for bindings in sparql_result.bindings:
+            if Variable("connector") in bindings:
+                existing_connectors.add(bindings[Variable("connector")].value)
         return connector_name in existing_connectors
+
+    def get_rdf_rank_status(self, repository_id: str) -> GraphDBRdfRankStatus:
+        """
+        Returns the status of GraphDB RDF rank for the repository.
+
+        :param repository_id: GraphDB Repository ID
+        :type repository_id: str
+        :rtype: GraphDBRdfRankStatus
+        """
+        sparql_result, _ = self.eval_sparql_query(
+            repository_id,
+            "PREFIX rank: <http://www.ontotext.com/owlim/RDFRank#> SELECT ?status { ?s rank:status ?status }",
+            validation=False
+        )
+        try:
+            raw_value = sparql_result.bindings[0][Variable("status")].value
+            if raw_value in GraphDBRdfRankStatus:
+                return GraphDBRdfRankStatus[raw_value]
+        except IndexError:
+            return GraphDBRdfRankStatus.ERROR
+        return GraphDBRdfRankStatus.ERROR
 
     @cached_property
     def version(self) -> str:
@@ -200,28 +248,25 @@ class GraphDB:
         )
         return response.json()["productVersion"]
 
-    def get_rdf_rank_status(self) -> GraphDBRdfRankStatus:
-        """
-        Returns the status of GraphDB RDF rank for the repository.
+    def __get_request(self, url: str, headers: dict, params=None) -> httpx.Response:
+        if self.__auth_header:
+            headers["Authorization"] = self.__auth_header
 
-        :rtype: GraphDBRdfRankStatus
-        """
-        sparql_result, _ = self.eval_sparql_query(
-            "PREFIX rank: <http://www.ontotext.com/owlim/RDFRank#> SELECT ?status { ?s rank:status ?status }",
-            validation=False
+        response = self.__graphdb_client.http_client.get(
+            url,
+            params=params,
+            headers=headers,
         )
-        try:
-            raw_value = sparql_result["results"]["bindings"][0]["status"]["value"]
-            if raw_value in GraphDBRdfRankStatus:
-                return GraphDBRdfRankStatus[raw_value]
-        except IndexError:
-            return GraphDBRdfRankStatus.ERROR
-        return GraphDBRdfRankStatus.ERROR
 
-    def __validate_query(self, query: str) -> str:
+        response.raise_for_status()
+        return response
+
+    def __validate_query(self, repository_id: str, query: str) -> str:
         """
         Validates a given SPARQL query and corrects its prefixes, if possible.
 
+        :param repository_id: GraphDB Repository ID
+        :type repository_id: str
         :param query: SPARQL query
         :type query: str
         :return updated SPARQL query, where:
@@ -241,7 +286,7 @@ class GraphDB:
         query_part = str(parsed_query[1:])
 
         defined_prefixes = self.__get_defined_prefixes(prefix_part)
-        known_prefixes = self.get_known_prefixes()
+        known_prefixes = self.__get_known_prefixes(repository_id)
 
         query = self.__correct_wrong_prefixes(defined_prefixes, known_prefixes, query)
 
@@ -250,7 +295,7 @@ class GraphDB:
         query = self.__add_missing_prefixes(defined_prefixes, known_prefixes, prefixed_iris, query)
         query = self.__add_new_lines_after_prefixes_if_missing(query)
 
-        self.__validate_iris_are_stored(defined_prefixes, prefixed_iris, query_part)
+        self.__validate_iris_are_stored(repository_id, defined_prefixes, prefixed_iris, query_part)
 
         return query
 
@@ -287,6 +332,21 @@ class GraphDB:
                 prefix_part
             )
         )
+
+    def __get_known_prefixes(self, repository_id: str) -> dict[str, str]:
+        """
+        Fetch all namespace declaration info available in the repository.
+
+        :param repository_id: GraphDB Repository ID
+        :type repository_id: str
+        :return: dictionary of prefix - namespace pairs
+        :rtype: dict[str, str]
+        """
+
+        return {
+            ns.prefix: ns.namespace
+            for ns in self.__graphdb_client.repositories.get(repository_id).namespaces.list()
+        }
 
     @staticmethod
     def __correct_wrong_prefixes(
@@ -371,6 +431,7 @@ class GraphDB:
 
     def __validate_iris_are_stored(
         self,
+        repository_id: str,
         defined_prefixes: dict[str, str],
         prefixed_iris: set[tuple[str, str]],
         query_part: str
@@ -378,6 +439,9 @@ class GraphDB:
         """
         Executes a SPARQL query, which uses the special predicate <http://www.ontotext.com/owlim/entity#id>
         to check if the IRIs in the SPARQL query are stored in the repository.
+
+        :param repository_id: GraphDB Repository ID
+        :type repository_id: str
         :param defined_prefixes: prefixes defined in the SPARQL query
         :type defined_prefixes: dict[str, str]
         :param prefixed_iris: the prefixed IRIs in the SPARQL query
@@ -398,9 +462,9 @@ class GraphDB:
             FILTER(?id < 0)
         }
         """
-        result, _ = self.eval_sparql_query(iri_validation_query % iri_values, validation=False)
+        result, _ = self.eval_sparql_query(repository_id, iri_validation_query % iri_values, validation=False)
         invalid_iris = list(
-            map(lambda x: f"<{x['iri']['value']}>", result["results"]["bindings"])
+            map(lambda x: f"<{x[Variable("iri")]}>", result.bindings)
         )
         if invalid_iris:
             raise ValueError(
@@ -470,45 +534,3 @@ class GraphDB:
         # 3. remove leading/trailing whitespace and collapse double newlines
         query = query.strip()
         return re.sub(r"\n+", "\n", query)
-
-    def eval_sparql_query(
-        self,
-        query: str,
-        result_format: str = None,
-        validation: bool = True
-    ) -> Tuple[Any, str]:
-        """
-        Executes the provided SPARQL query against GraphDB.
-
-        :param query: the SPARQL query, which should be evaluated
-        :type query: str
-        :param result_format: Format of the results.
-        Possible values are "json", "xml", "turtle", "n3", "rdf", "rdf+xml", "csv", "tsv", "json-ld"
-        (defined as constants in SPARQLWrapper). All other cases are ignored.
-        :type result_format: str
-        :param validation: should be True, if the SPARQL query is generated from a LLM, and should be validated.
-        The validation includes parsing of the query, checks for missing prefixes,
-         or usage of IRIs, which are not stored in GraphDB.
-        :type validation: bool
-        :return: the results in the expected result_format
-        :rtype:
-        """
-        if validation:
-            query = self.__validate_query(query)
-
-        sparql_wrapper = self.__new_sparql_wrapper()
-        sparql_wrapper.setQuery(query)
-        sparql_wrapper.setMethod(Wrapper.POST)
-
-        if result_format is None:
-            if sparql_wrapper.queryType in {"CONSTRUCT", "DESCRIBE"}:
-                result_format = TURTLE
-            else:
-                result_format = JSON
-
-        sparql_wrapper.setReturnFormat(result_format)
-        results = sparql_wrapper.query().convert()
-        if result_format != JSON:
-            return results.decode("utf-8"), query
-        else:
-            return results, query

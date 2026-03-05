@@ -4,21 +4,16 @@ import random
 
 import pytest
 from langchain_core.tools import ToolException
+from rdflib import Graph
 
 from ttyg.graphdb import GraphDB
 from ttyg.tools import SparqlQueryTool
-
-GRAPHDB_BASE_URL = "http://localhost:7200/"
-GRAPHDB_REPOSITORY_ID = "starwars"
+from .constants import GRAPHDB_REPOSITORY_ID
 
 
 @pytest.fixture
-def sparql_query_tool():
-    graph = GraphDB(
-        base_url=GRAPHDB_BASE_URL,
-        repository_id=GRAPHDB_REPOSITORY_ID,
-    )
-    yield SparqlQueryTool(graph=graph)
+def sparql_query_tool(graphdb: GraphDB):
+    yield SparqlQueryTool(graph=graphdb, graphdb_repository_id=GRAPHDB_REPOSITORY_ID)
 
 
 def test_eval_sparql_query_invalid_sparql_query_raises_value_error(sparql_query_tool: SparqlQueryTool) -> None:
@@ -52,6 +47,32 @@ def test_eval_sparql_query_ask_query(sparql_query_tool: SparqlQueryTool) -> None
     assert True == json.loads(results)["boolean"]
     assert ("PREFIX voc: <https://swapi.co/vocabulary/>\n"
             "ASK { ?character voc:eyeColor ?eyeColor}") == artifact.query
+
+
+def test_eval_sparql_query_describe_query(sparql_query_tool: SparqlQueryTool) -> None:
+    results, artifact = sparql_query_tool._run(
+        "DESCRIBE <https://swapi.co/vocabulary/eyeColor>"
+    )
+    graph = Graph().parse(
+        data=results,
+        format="turtle",
+    )
+    assert 5 == len(graph)
+    assert "DESCRIBE <https://swapi.co/vocabulary/eyeColor>" == artifact.query
+
+
+def test_eval_sparql_query_construct_query(sparql_query_tool: SparqlQueryTool) -> None:
+    results, artifact = sparql_query_tool._run(
+        "CONSTRUCT { <https://swapi.co/vocabulary/eyeColor> ?p ?o } WHERE { <https://swapi.co/vocabulary/eyeColor> ?p "
+        "?o }"
+    )
+    graph = Graph().parse(
+        data=results,
+        format="turtle",
+    )
+    assert 5 == len(graph)
+    assert ("CONSTRUCT { <https://swapi.co/vocabulary/eyeColor> ?p ?o } "
+            "WHERE { <https://swapi.co/vocabulary/eyeColor> ?p ?o }") == artifact.query
 
 
 def test_eval_sparql_query_missing_known_prefix_is_added(sparql_query_tool: SparqlQueryTool) -> None:

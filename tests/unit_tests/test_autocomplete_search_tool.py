@@ -5,22 +5,13 @@ from langchain_core.tools import ToolException
 
 from ttyg.graphdb import GraphDB
 from ttyg.tools import AutocompleteSearchTool
-
-GRAPHDB_BASE_URL = "http://localhost:7200/"
-GRAPHDB_REPOSITORY_ID = "starwars"
-
-
-@pytest.fixture
-def graphdb():
-    yield GraphDB(
-        base_url=GRAPHDB_BASE_URL,
-        repository_id=GRAPHDB_REPOSITORY_ID,
-    )
+from .constants import GRAPHDB_REPOSITORY_ID
 
 
 def test_result_class_filter(graphdb: GraphDB) -> None:
     autocomplete_search_tool = AutocompleteSearchTool(
         graph=graphdb,
+        graphdb_repository_id=GRAPHDB_REPOSITORY_ID,
     )
     results, artifact = autocomplete_search_tool._run(
         query="Skywalker",
@@ -75,6 +66,7 @@ LIMIT 5""" == artifact.query
 def test_result_class_is_prefixed_with_unknown_prefix(graphdb: GraphDB) -> None:
     autocomplete_search_tool = AutocompleteSearchTool(
         graph=graphdb,
+        graphdb_repository_id=GRAPHDB_REPOSITORY_ID,
     )
     with pytest.raises(ToolException) as exc:
         autocomplete_search_tool._run(
@@ -88,6 +80,7 @@ def test_result_class_is_prefixed_with_unknown_prefix(graphdb: GraphDB) -> None:
 def test_property_path_is_syntactically_wrong(graphdb: GraphDB) -> None:
     autocomplete_search_tool = AutocompleteSearchTool(
         graph=graphdb,
+        graphdb_repository_id=GRAPHDB_REPOSITORY_ID,
         property_path="http://schema.org/name",
     )
     with pytest.raises(ToolException) as exc:
@@ -101,6 +94,7 @@ def test_property_path_is_syntactically_wrong(graphdb: GraphDB) -> None:
 def test_property_path_is_prefixed(graphdb: GraphDB) -> None:
     autocomplete_search_tool = AutocompleteSearchTool(
         graph=graphdb,
+        graphdb_repository_id=GRAPHDB_REPOSITORY_ID,
         property_path="rdfs:label",
     )
     results, artifact = autocomplete_search_tool._run(
@@ -123,6 +117,7 @@ LIMIT 5""" == artifact.query
 def test_property_path_with_two_properties_which_are_prefixed(graphdb: GraphDB) -> None:
     autocomplete_search_tool = AutocompleteSearchTool(
         graph=graphdb,
+        graphdb_repository_id=GRAPHDB_REPOSITORY_ID,
         property_path="rdfs:label | schema:name",
     )
     with pytest.raises(ToolException) as exc:
@@ -136,6 +131,7 @@ def test_property_path_with_two_properties_which_are_prefixed(graphdb: GraphDB) 
 def test_property_path_is_prefixed_with_unknown_prefix(graphdb: GraphDB) -> None:
     autocomplete_search_tool = AutocompleteSearchTool(
         graph=graphdb,
+        graphdb_repository_id=GRAPHDB_REPOSITORY_ID,
         property_path="unknown:label",
     )
     with pytest.raises(ToolException) as exc:

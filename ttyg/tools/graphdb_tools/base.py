@@ -12,6 +12,7 @@ class BaseGraphDBTool(BaseTool, metaclass=ABCMeta):
 
     graph: GraphDB
     """The GraphDB Client"""
+    graphdb_repository_id: str
     handle_tool_error: bool = True
 
     @property

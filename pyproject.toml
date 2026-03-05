@@ -1,15 +1,15 @@
 [project]
 name = "ttyg"
-version = "3.2.1a0"
+version = "4.0.0"
 description = "Natural language querying for GraphDB using LangGraph agents"
 authors = []
 readme = "README.md"
 license = "Apache-2.0"
 requires-python = ">=3.12,<3.14"
 dependencies = [
-    "sparqlwrapper==2.0.0",
+    "rdflib[graphdb]==7.6.0",
     "langchain==1.2.10",
-    "langgraph==1.0.9",
+    "langgraph==1.0.10",
 ]
 
 [project.urls]
@@ -35,7 +35,7 @@ langchain-openai = "1.1.10"
 optional = true
 
 [tool.poetry.group.llm-anthropic.dependencies]
-langchain-anthropic = "1.3.3"
+langchain-anthropic = "1.3.4"
 
 [build-system]
 requires = ["poetry-core>=2.0.0"]

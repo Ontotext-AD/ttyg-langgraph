@@ -1,4 +1,3 @@
-import json
 import logging
 from typing import (
     ClassVar,
@@ -7,16 +6,15 @@ from typing import (
 )
 
 from langchain_core.callbacks import CallbackManagerForToolRun
-from langchain_core.tools import ToolException
 from pydantic import Field, model_validator, BaseModel
 from typing_extensions import Self
 
 from ttyg.utils import timeit
-from .base import BaseGraphDBTool
 from .sparql_query_artifact import SparqlQueryArtifact
+from .sparql_query_tool import SparqlQueryTool
 
 
-class SimilaritySearchQueryTool(BaseGraphDBTool):
+class SimilaritySearchQueryTool(SparqlQueryTool):
     """
     Tool, which uses GraphDB Similarity Index.
     Similarity Index must exist in order to use this tool.
@@ -30,7 +28,7 @@ class SimilaritySearchQueryTool(BaseGraphDBTool):
     name: str = "similarity_search"
     description: str = "Query GraphDB by full-text search and return a subgraph of RDF triples."
     args_schema: Type[BaseModel] = SearchInput
-    response_format: str = "content_and_artifact"
+
     sparql_query_template: str = """PREFIX sim: <http://www.ontotext.com/graphdb/similarity/>
 PREFIX sim-index: <http://www.ontotext.com/graphdb/similarity/instance/>
 DESCRIBE ?documentID {{
@@ -51,7 +49,7 @@ DESCRIBE ?documentID {{
 
     @model_validator(mode="after")
     def check_similarity_index_exists(self) -> Self:
-        if not self.graph.similarity_index_exists(self.index_name):
+        if not self.graph.similarity_index_exists(self.graphdb_repository_id, self.index_name):
             logging.warning(
                 f"Similarity index with name \"{self.index_name}\" doesn't exist."
             )
@@ -63,15 +61,11 @@ DESCRIBE ?documentID {{
         query: str,
         run_manager: CallbackManagerForToolRun | None = None,
     ) -> Tuple[str, SparqlQueryArtifact]:
-        try:
-            query = self.sparql_query_template.format(
-                index_name=self.index_name,
-                query=query,
-                limit=self.limit,
-                similarity_score_threshold=self.similarity_score_threshold,
-            )
-            logging.debug(f"Searching with similarity query {query}")
-            query_results, actual_query = self.graph.eval_sparql_query(query, validation=False)
-            return json.dumps(query_results, indent=2), SparqlQueryArtifact(query=actual_query)
-        except Exception as e:
-            raise ToolException(str(e))
+        query = self.sparql_query_template.format(
+            index_name=self.index_name,
+            query=query,
+            limit=self.limit,
+            similarity_score_threshold=self.similarity_score_threshold,
+        )
+        logging.debug(f"Searching with similarity query {query}")
+        return super()._run(query=query, validation=False)
