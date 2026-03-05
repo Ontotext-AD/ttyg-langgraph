@@ -26,18 +26,25 @@ class SparqlQueryTool(BaseGraphDBTool):
 
     name: str = "sparql_query"
     description: str = "Query GraphDB by SPARQL SELECT, CONSTRUCT, DESCRIBE or ASK query and return result."
-    response_format: str = "content_and_artifact"
     args_schema: Type[BaseModel] = SearchInput
+    response_format: str = "content_and_artifact"
 
     @timeit
     def _run(
         self,
         query: str,
+        validation: bool = True,
         run_manager: CallbackManagerForToolRun | None = None,
     ) -> Tuple[str, SparqlQueryArtifact]:
         try:
-            logging.debug(f"Executing generated SPARQL query {query}")
-            query_results, actual_query = self.graph.eval_sparql_query(query)
-            return json.dumps(query_results, indent=2), SparqlQueryArtifact(query=actual_query)
+            logging.debug(f"Executing SPARQL query {query}")
+            query_results, actual_query = self.graph.eval_sparql_query(
+                self.graphdb_repository_id, query, validation=validation
+            )
+            if query_results.type in ("CONSTRUCT", "DESCRIBE"):
+                return (query_results.serialize(format="turtle", encoding="utf-8").decode("utf-8"),
+                        SparqlQueryArtifact(query=actual_query))
+            query_results_as_json = query_results.serialize(format="json", encoding="utf-8").decode("utf-8")
+            return json.dumps(json.loads(query_results_as_json), indent=2), SparqlQueryArtifact(query=actual_query)
         except Exception as e:
             raise ToolException(str(e))

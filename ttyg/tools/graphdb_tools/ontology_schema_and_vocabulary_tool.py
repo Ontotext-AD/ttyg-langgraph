@@ -17,13 +17,15 @@ from .base import BaseGraphDBTool
 class OntologySchemaAndVocabularyTool(BaseGraphDBTool):
     """
     Tool, which returns the configured ontology schema and vocabulary for the SPARQL queries.
-    The ontology schema can be provided either with a path to a file in turtle format containing the ontology schema statements,
+    The ontology schema can be provided either with a path to a file in turtle format containing the ontology schema
+    statements,
     or with a SPARQL CONSTRUCT query, which returns all the ontology schema statements.
     """
 
     name: str = "ontology_schema_and_vocabulary_tool"
     description: str = "Tool, which returns the configured ontology schema and vocabulary for the SPARQL queries"
     ontology_schema_file_path: Path | None = None
+    graphdb_repository_id: str | None = None
     ontology_schema_query: str | None = None
 
     @model_validator(mode="after")
@@ -55,6 +57,10 @@ class OntologySchemaAndVocabularyTool(BaseGraphDBTool):
             raise ValueError(
                 "Neither ontology schema file path nor ontology schema query is provided."
             )
+        if self.ontology_schema_query and not self.graphdb_repository_id:
+            raise ValueError(
+                "GraphDB repository id is mandatory, when ontology schema query is used."
+            )
         return self
 
     @computed_field
@@ -62,10 +68,12 @@ class OntologySchemaAndVocabularyTool(BaseGraphDBTool):
     def schema_graph(self) -> Graph:
         if self.ontology_schema_query:
             logging.debug("Configuring the ontology schema with query.")
-            sparql_results, _ = self.graph.eval_sparql_query(self.ontology_schema_query, validation=False)
+            sparql_results, _ = self.graph.eval_sparql_query(
+                self.graphdb_repository_id, self.ontology_schema_query, validation=False
+            )
             schema_graph = Graph().parse(
-                data=sparql_results,
-                format="turtle",
+                data=sparql_results.serialize(encoding="utf-8"),
+                format="xml",
             )
             logging.debug(f"Collected {len(schema_graph)} ontology schema statements.")
             return schema_graph
