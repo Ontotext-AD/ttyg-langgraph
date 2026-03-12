@@ -40,6 +40,16 @@ class GraphDB:
     """Wrapper of rdflib GraphDB Client https://rdflib.readthedocs.io/en/stable/graphdb/"""
 
     _lock = threading.Lock()
+    __WELL_KNOWN_PREFIXES = (
+        "http://www.w3.org/2001/XMLSchema#",
+        "http://www.ontotext.com/owlim/RDFRank#",
+        "http://www.ontotext.com/plugins/autocomplete#",
+        "http://www.openrdf.org/schema/sesame#",
+        "http://spinrdf.org/spif#",
+        "http://www.ontotext.com/connectors/",
+        "http://www.ontotext.com/fts",
+        "http://www.ontotext.com/describe/outgoing"
+    )
 
     def __init__(
         self,
@@ -47,6 +57,7 @@ class GraphDB:
         connect_timeout: float = 2,
         read_timeout: float = 10,
         auth_header: str | None = None,
+        well_known_prefixes: tuple[str] | None = None,
     ):
         """
         Initializes a GraphDB Client.
@@ -59,6 +70,9 @@ class GraphDB:
         :type read_timeout: float
         :param auth_header: optional, the value of the "Authorization" header to pass to GraphDB, if it's secured
         :type auth_header: str | None
+        :param well_known_prefixes: when validating the SPARQL queries, and checking if the IRIs in them are present
+        in GraphDB, IRIs starting with these prefixes will be skipped.
+        :type well_known_prefixes: tuple[str] | None
         """
 
         self.__base_url = base_url
@@ -68,6 +82,10 @@ class GraphDB:
             auth=auth_header,
             timeout=httpx.Timeout((connect_timeout, read_timeout))
         )
+        if well_known_prefixes is not None:
+            self.well_known_prefixes = well_known_prefixes
+        else:
+            self.well_known_prefixes = GraphDB.__WELL_KNOWN_PREFIXES
 
     def __enter__(self):
         return self
@@ -475,14 +493,14 @@ class GraphDB:
                 f"The following IRIs are not used in the data stored in GraphDB: {', '.join(invalid_iris)}"
             )
 
-    @staticmethod
     def __get_all_iris(
+        self,
         defined_prefixes: dict[str, str],
         prefixed_iris: set[tuple[str, str]],
         query_part: str
     ) -> set[str]:
         """
-        Returns all IRIs used in the SPARQL query
+        Returns all IRIs used in the SPARQL query except the ones starting with one of the well known prefixes.
         :param defined_prefixes: prefixes defined in the SPARQL query
         :type defined_prefixes: dict[str, str]
         :param prefixed_iris: the prefixed IRIs in the SPARQL query
@@ -498,27 +516,7 @@ class GraphDB:
         }
         full_iris = set(re.findall(r"rdflib\.term\.URIRef\('(.+?)'\)", query_part))
         iris = full_iris | prefixed_iris_to_full_iris
-        iris = set(
-            filter(
-                lambda x: (
-                              not x.startswith("http://www.w3.org/2001/XMLSchema#")
-                          ) and (
-                              not x.startswith("http://www.ontotext.com/owlim/RDFRank#")
-                          ) and (
-                              not x.startswith("http://www.ontotext.com/plugins/autocomplete#")
-                          ) and (
-                              not x.startswith("http://www.openrdf.org/schema/sesame#")
-                          ) and (
-                              not x.startswith("http://spinrdf.org/spif#")
-                          ) and (
-                              not x.startswith("http://www.ontotext.com/fts")
-                          ) and (
-                              not x.startswith("http://www.ontotext.com/describe/outgoing")
-                          ),
-                iris
-            )
-        )
-        return iris
+        return {iri for iri in iris if not iri.startswith(self.well_known_prefixes)}
 
     @staticmethod
     def __add_new_lines_after_prefixes_if_missing(query: str) -> str:
