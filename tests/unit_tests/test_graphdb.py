@@ -1,7 +1,12 @@
 import io
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
+import httpx
 import pytest
+from rdflib.contrib.graphdb.exceptions import (
+    RepositoryNotFoundError,
+    RepositoryNotHealthyError,
+)
 from rdflib.query import Result
 
 from ttyg.graphdb import GraphDB
@@ -9,9 +14,10 @@ from ttyg.graphdb import GraphDBAutocompleteStatus, GraphDBRdfRankStatus
 from .constants import GRAPHDB_REPOSITORY_ID
 
 
-def test_health(graphdb: GraphDB) -> None:
+def test_health_existing_repository(graphdb: GraphDB) -> None:
     response = graphdb.health(GRAPHDB_REPOSITORY_ID)
-    assert response == {
+    assert response.status_code == 200
+    assert response.json() == {
         "name": f"{GRAPHDB_REPOSITORY_ID}",
         "status": "green",
         "components": [
@@ -84,6 +90,40 @@ def test_health(graphdb: GraphDB) -> None:
             }
         ]
     }
+
+
+def test_health_missing_repository(graphdb: GraphDB) -> None:
+    with pytest.raises(RepositoryNotFoundError) as exc:
+        graphdb.health("missing_repository")
+    assert "Repository missing_repository not found." == str(exc.value)
+
+
+def test_health_unhealthy_repository() -> None:
+    repository_id = "unhealthy_repository"
+
+    mocked_health_response = MagicMock(spec=httpx.Response)
+    mocked_health_response.status_code = 500
+    mocked_health_response.text = "Internal Server Error"
+    mocked_health_response.raise_for_status.side_effect = httpx.HTTPStatusError(
+        message="500 Server Error",
+        request=MagicMock(),
+        response=mocked_health_response
+    )
+
+    with patch("ttyg.graphdb.graphdb.GraphDBClient") as mocked_graphdb_client:
+        graphdb_client = mocked_graphdb_client.return_value
+        graphdb_client.http_client.get.return_value = mocked_health_response
+
+        graphdb = GraphDB(base_url="http://fake-graphdb:7200")
+
+        with pytest.raises(RepositoryNotHealthyError) as exc:
+            graphdb.health(repository_id)
+        assert "Repository unhealthy_repository is not healthy. 500 - Internal Server Error" == str(exc.value)
+
+        graphdb_client.http_client.get.assert_called_once_with(
+            f"/repositories/{repository_id}/health",
+            params={"passive": "5"}
+        )
 
 
 def test_eval_sparql_query_invalid_sparql_query_raises_value_error(graphdb: GraphDB) -> None:

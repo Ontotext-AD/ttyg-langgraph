@@ -9,6 +9,10 @@ import httpx
 import pyparsing
 from rdflib import Variable
 from rdflib.contrib.graphdb.client import GraphDBClient
+from rdflib.contrib.graphdb.exceptions import (
+    RepositoryNotFoundError,
+    RepositoryNotHealthyError,
+)
 from rdflib.plugins import sparql
 from rdflib.query import Result
 
@@ -71,10 +75,10 @@ class GraphDB:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.__graphdb_client.close()
 
-    def health(self, repository_id: str, timeout: int = 5) -> dict:
+    def health(self, repository_id: str, timeout: int = 5) -> httpx.Response:
         """Repository health check.
         The implementation from rdflib returns a boolean value, so we need to override it
-        to get the response body.
+        to get the response.
 
         :param repository_id: GraphDB Repository ID
         :type repository_id: str
@@ -82,8 +86,8 @@ class GraphDB:
                 to retrieve the repository within this timeout. If not, the passive
                 check is performed.
         :type timeout: int
-        :return: the response body
-        :rtype: dict
+        :return: the http response
+        :rtype: httpx.Response
 
         Raises:
             RepositoryNotFoundError: If the repository is not found or the passive check failed.
@@ -95,7 +99,7 @@ class GraphDB:
                 f"/repositories/{repository_id}/health", params=params
             )
             response.raise_for_status()
-            return response.json()
+            return response
         except httpx.HTTPStatusError as err:
             if err.response.status_code == 404:
                 raise RepositoryNotFoundError(
