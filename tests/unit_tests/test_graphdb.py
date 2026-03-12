@@ -8,10 +8,10 @@ from rdflib.contrib.graphdb.exceptions import (
     RepositoryNotHealthyError,
 )
 from rdflib.query import Result
-
 from ttyg.graphdb import GraphDB
 from ttyg.graphdb import GraphDBAutocompleteStatus, GraphDBRdfRankStatus
-from .constants import GRAPHDB_REPOSITORY_ID
+
+from .constants import GRAPHDB_BASE_URL, GRAPHDB_REPOSITORY_ID
 
 
 def test_health_existing_repository(graphdb: GraphDB) -> None:
@@ -239,6 +239,73 @@ def test_eval_sparql_query_iri_which_is_not_stored(graphdb: GraphDB) -> None:
         )
     assert ("The following IRIs are not used in the data stored in GraphDB: "
             "<https://swapi.co/vocabulary/unknown>") == str(exc.value)
+
+
+def test_eval_sparql_query_iris_which_are_not_stored_but_should_be_skipped(graphdb: GraphDB) -> None:
+    graphdb.eval_sparql_query(
+        GRAPHDB_REPOSITORY_ID,
+        """
+        PREFIX elastic: <http://www.ontotext.com/connectors/elasticsearch#>
+        PREFIX elastic-index: <http://www.ontotext.com/connectors/elasticsearch/instance#>
+
+        SELECT ?entity {
+          ?search a elastic-index:my_index ;
+            elastic:query "grape:cabernet" ;
+            elastic:entities ?entity .
+        }"""
+    )
+
+
+def test_eval_sparql_query_override_well_known_prefixes() -> None:
+    with pytest.raises(ValueError) as exc:
+        GraphDB(
+            base_url=GRAPHDB_BASE_URL,
+            well_known_prefixes=(
+                "http://www.w3.org/2001/XMLSchema#",
+                "http://www.ontotext.com/owlim/RDFRank#",
+                "http://www.ontotext.com/plugins/autocomplete#",
+                "http://www.openrdf.org/schema/sesame#",
+                "http://spinrdf.org/spif#",
+                "http://www.ontotext.com/fts",
+                "http://www.ontotext.com/describe/outgoing"
+            )
+        ).eval_sparql_query(
+            GRAPHDB_REPOSITORY_ID,
+            """
+PREFIX elastic: <http://www.ontotext.com/connectors/elasticsearch#>
+PREFIX elastic-index: <http://www.ontotext.com/connectors/elasticsearch/instance#>
+
+SELECT ?entity {
+  ?search a elastic-index:my_index ;
+    elastic:query "grape:cabernet" ;
+    elastic:entities ?entity .
+}"""
+        )
+    assert str(exc.value).startswith("The following IRIs are not used in the data stored in GraphDB: ")
+    assert "http://www.ontotext.com/connectors/elasticsearch#" in str(exc.value)
+    assert "http://www.ontotext.com/connectors/elasticsearch/instance#" in str(exc.value)
+
+
+def test_eval_sparql_query_override_well_known_prefixes_empty_prefixes() -> None:
+    with pytest.raises(ValueError) as exc:
+        GraphDB(
+            base_url=GRAPHDB_BASE_URL,
+            well_known_prefixes=()
+        ).eval_sparql_query(
+            GRAPHDB_REPOSITORY_ID,
+            """
+PREFIX elastic: <http://www.ontotext.com/connectors/elasticsearch#>
+PREFIX elastic-index: <http://www.ontotext.com/connectors/elasticsearch/instance#>
+
+SELECT ?entity {
+  ?search a elastic-index:my_index ;
+    elastic:query "grape:cabernet" ;
+    elastic:entities ?entity .
+}"""
+        )
+    assert str(exc.value).startswith("The following IRIs are not used in the data stored in GraphDB: ")
+    assert "http://www.ontotext.com/connectors/elasticsearch#" in str(exc.value)
+    assert "http://www.ontotext.com/connectors/elasticsearch/instance#" in str(exc.value)
 
 
 @pytest.mark.parametrize(
