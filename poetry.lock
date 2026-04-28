@@ -14,14 +14,14 @@ files = [
 
 [[package]]
 name = "anthropic"
-version = "0.83.0"
+version = "0.97.0"
 description = "The official Python library for the anthropic API"
 optional = false
 python-versions = ">=3.9"
 groups = ["llm-anthropic"]
 files = [
-    {file = "anthropic-0.83.0-py3-none-any.whl", hash = "sha256:f069ef508c73b8f9152e8850830d92bd5ef185645dbacf234bb213344a274810"},
-    {file = "anthropic-0.83.0.tar.gz", hash = "sha256:a8732c68b41869266c3034541a31a29d8be0f8cd0a714f9edce3128b351eceb4"},
+    {file = "anthropic-0.97.0-py3-none-any.whl", hash = "sha256:8a1a472dfabcfc0c52ff6a3eecf724ac7e07107a2f6e2367be55ceb42f5d5613"},
+    {file = "anthropic-0.97.0.tar.gz", hash = "sha256:021e79fd8e21e90ad94dc5ba2bbbd8b1599f424f5b1fab6c06204009cab764be"},
 ]
 
 [package.dependencies]
@@ -32,11 +32,13 @@ httpx = ">=0.25.0,<1"
 jiter = ">=0.4.0,<1"
 pydantic = ">=1.9.0,<3"
 sniffio = "*"
-typing-extensions = ">=4.10,<5"
+typing-extensions = ">=4.14,<5"
 
 [package.extras]
 aiohttp = ["aiohttp", "httpx-aiohttp (>=0.1.9)"]
+aws = ["boto3 (>=1.28.57)", "botocore (>=1.31.57)"]
 bedrock = ["boto3 (>=1.28.57)", "botocore (>=1.31.57)"]
+mcp = ["mcp (>=1.0) ; python_version >= \"3.10\""]
 vertex = ["google-auth[requests] (>=2,<3)"]
 
 [[package]]
@@ -1468,25 +1470,26 @@ files = [
 
 [[package]]
 name = "langchain"
-version = "1.2.12"
+version = "1.2.15"
 description = "Building applications with LLMs through composability"
 optional = false
 python-versions = "<4.0.0,>=3.10.0"
 groups = ["main"]
 files = [
-    {file = "langchain-1.2.12-py3-none-any.whl", hash = "sha256:60eff184b8f92c2610f5a4c9a97ad339a891adb01901e83e4df8e6c9c69cf852"},
-    {file = "langchain-1.2.12.tar.gz", hash = "sha256:ed705b5b293799f7e3e394387f398a1b71707542758283206c8c21415759d991"},
+    {file = "langchain-1.2.15-py3-none-any.whl", hash = "sha256:e349db349cb3e9550c4044077cf90a1717691756cc236438404b23500e615874"},
+    {file = "langchain-1.2.15.tar.gz", hash = "sha256:1717b6719daefae90b2728314a5e2a117ff916291e2862595b6c3d6fba33d652"},
 ]
 
 [package.dependencies]
 langchain-core = ">=1.2.10,<2.0.0"
-langgraph = ">=1.1.1,<1.2.0"
+langgraph = ">=1.1.5,<1.2.0"
 pydantic = ">=2.7.4,<3.0.0"
 
 [package.extras]
 anthropic = ["langchain-anthropic"]
 aws = ["langchain-aws"]
 azure-ai = ["langchain-azure-ai"]
+baseten = ["langchain-baseten (>=0.2.0)"]
 community = ["langchain-community"]
 deepseek = ["langchain-deepseek"]
 fireworks = ["langchain-fireworks"]
@@ -1503,35 +1506,36 @@ xai = ["langchain-xai"]
 
 [[package]]
 name = "langchain-anthropic"
-version = "1.3.4"
+version = "1.4.1"
 description = "Integration package connecting Claude (Anthropic) APIs and LangChain"
 optional = false
 python-versions = "<4.0.0,>=3.10.0"
 groups = ["llm-anthropic"]
 files = [
-    {file = "langchain_anthropic-1.3.4-py3-none-any.whl", hash = "sha256:cd112dcc8049aef09f58b3c4338b2c9db5ee98105e08664954a4e40d8bf120b9"},
-    {file = "langchain_anthropic-1.3.4.tar.gz", hash = "sha256:000ed4c2d6fb8842b4ffeed22a74a3e84f9e9bcb63638e4abbb4a1d8ffa07211"},
+    {file = "langchain_anthropic-1.4.1-py3-none-any.whl", hash = "sha256:5a48afbb2b1bad9c46badaccc8e23b0dd7ae07b7583f76bac21ddb3dac831efd"},
+    {file = "langchain_anthropic-1.4.1.tar.gz", hash = "sha256:e17d027091438620e35ff2f06aefdfd63c8dcdf6abc606009ddfe3c764f2bc2e"},
 ]
 
 [package.dependencies]
-anthropic = ">=0.78.0,<1.0.0"
-langchain-core = ">=1.2.15,<2.0.0"
+anthropic = ">=0.96.0,<1.0.0"
+langchain-core = ">=1.2.31,<2.0.0"
 pydantic = ">=2.7.4,<3.0.0"
 
 [[package]]
 name = "langchain-core"
-version = "1.2.18"
+version = "1.3.2"
 description = "Building applications with LLMs through composability"
 optional = false
 python-versions = "<4.0.0,>=3.10.0"
 groups = ["main", "llm-anthropic", "llm-openai"]
 files = [
-    {file = "langchain_core-1.2.18-py3-none-any.whl", hash = "sha256:cccb79523e0045174ab826054e555fddc973266770e427588c8f1ec9d9d6212b"},
-    {file = "langchain_core-1.2.18.tar.gz", hash = "sha256:ffe53eec44636d092895b9fe25d28af3aaf79060e293fa7cda2a5aaa50c80d21"},
+    {file = "langchain_core-1.3.2-py3-none-any.whl", hash = "sha256:d44a66127f9f8db735bdfd0ab9661bccb47a97113cfd3f2d89c74864422b7274"},
+    {file = "langchain_core-1.3.2.tar.gz", hash = "sha256:fd7a50b2f28ba561fd9d7f5d2760bc9e06cf00cdf820a3ccafe88a94ffa8d5b7"},
 ]
 
 [package.dependencies]
 jsonpatch = ">=1.33.0,<2.0.0"
+langchain-protocol = ">=0.0.10"
 langsmith = ">=0.3.45,<1.0.0"
 packaging = ">=23.2.0"
 pydantic = ">=2.7.4,<3.0.0"
@@ -1542,37 +1546,52 @@ uuid-utils = ">=0.12.0,<1.0"
 
 [[package]]
 name = "langchain-openai"
-version = "1.1.11"
+version = "1.1.14"
 description = "An integration package connecting OpenAI and LangChain"
 optional = false
 python-versions = "<4.0.0,>=3.10.0"
 groups = ["llm-openai"]
 files = [
-    {file = "langchain_openai-1.1.11-py3-none-any.whl", hash = "sha256:a03596221405d38d6852fb865467cb0d9ff9e79f335905eb6a576e8c4874ac71"},
-    {file = "langchain_openai-1.1.11.tar.gz", hash = "sha256:44b003a2960d1f6699f23721196b3b97d0c420d2e04444950869213214b7a06a"},
+    {file = "langchain_openai-1.1.14-py3-none-any.whl", hash = "sha256:cb525d2011f9813fc15a7dcfd4bca5b87badcbcb2c113a7fbe45d1b8a1bbb69c"},
+    {file = "langchain_openai-1.1.14.tar.gz", hash = "sha256:71b4262932fabe506ce79c175dbc956cc48f24d81e20b27662df493147750643"},
 ]
 
 [package.dependencies]
-langchain-core = ">=1.2.18,<2.0.0"
+langchain-core = ">=1.2.31,<2.0.0"
 openai = ">=2.26.0,<3.0.0"
 tiktoken = ">=0.7.0,<1.0.0"
 
 [[package]]
+name = "langchain-protocol"
+version = "0.0.12"
+description = "Python bindings for the LangChain agent streaming protocol"
+optional = false
+python-versions = "<4.0.0,>=3.10.0"
+groups = ["main", "llm-anthropic", "llm-openai"]
+files = [
+    {file = "langchain_protocol-0.0.12-py3-none-any.whl", hash = "sha256:402b61f42d4139692528cf37226c367bb6efc8ff8165b29380accb0abfece7b2"},
+    {file = "langchain_protocol-0.0.12.tar.gz", hash = "sha256:5e14c434290a705c9510fdb1a83ecf7561a5e6e0dfd053930ade80dba069269f"},
+]
+
+[package.dependencies]
+typing-extensions = ">=4.7.0,<5.0.0"
+
+[[package]]
 name = "langgraph"
-version = "1.1.1"
+version = "1.1.10"
 description = "Building stateful, multi-actor applications with LLMs"
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "langgraph-1.1.1-py3-none-any.whl", hash = "sha256:d0cc8d347131cbfc010e65aad9b0f1afbd0e151f470c288bec1f3df8336c50c6"},
-    {file = "langgraph-1.1.1.tar.gz", hash = "sha256:cd6282efc657c955b41bff6bd9693de58137ad18f7e7f16b4d17c7d2118d53e1"},
+    {file = "langgraph-1.1.10-py3-none-any.whl", hash = "sha256:8a4f163f72f4401648d0c11b48ee906947d938ba8cf1f474540fe591534f0d17"},
+    {file = "langgraph-1.1.10.tar.gz", hash = "sha256:3115beb58203283c98d8752a90c034f3432177d2979a1fe205f76e5f1b744500"},
 ]
 
 [package.dependencies]
-langchain-core = ">=0.1"
+langchain-core = ">=1.3.0,<2"
 langgraph-checkpoint = ">=2.1.0,<5.0.0"
-langgraph-prebuilt = ">=1.0.8,<1.1.0"
+langgraph-prebuilt = ">=1.0.12,<1.1.0"
 langgraph-sdk = ">=0.3.0,<0.4.0"
 pydantic = ">=2.7.4"
 xxhash = ">=3.5.0"
@@ -1595,18 +1614,18 @@ ormsgpack = ">=1.12.0"
 
 [[package]]
 name = "langgraph-prebuilt"
-version = "1.0.8"
+version = "1.0.12"
 description = "Library with high-level APIs for creating and executing LangGraph agents and tools."
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "langgraph_prebuilt-1.0.8-py3-none-any.whl", hash = "sha256:d16a731e591ba4470f3e313a319c7eee7dbc40895bcf15c821f985a3522a7ce0"},
-    {file = "langgraph_prebuilt-1.0.8.tar.gz", hash = "sha256:0cd3cf5473ced8a6cd687cc5294e08d3de57529d8dd14fdc6ae4899549efcf69"},
+    {file = "langgraph_prebuilt-1.0.12-py3-none-any.whl", hash = "sha256:ab83822d2724d434d3536dc127b86c7d16fe3fb8dc02a89a683bc77b2e55f6e9"},
+    {file = "langgraph_prebuilt-1.0.12.tar.gz", hash = "sha256:edcb11ff29996def816243f267fb2c85c0a2e4fb618c275f3d238aee8dd6a5ec"},
 ]
 
 [package.dependencies]
-langchain-core = ">=1.0.0"
+langchain-core = ">=1.3.1"
 langgraph-checkpoint = ">=2.1.0,<5.0.0"
 
 [[package]]
@@ -1627,14 +1646,14 @@ orjson = ">=3.11.5"
 
 [[package]]
 name = "langsmith"
-version = "0.7.5"
+version = "0.7.37"
 description = "Client library to connect to the LangSmith Observability and Evaluation Platform."
 optional = false
 python-versions = ">=3.10"
 groups = ["main", "llm-anthropic", "llm-openai"]
 files = [
-    {file = "langsmith-0.7.5-py3-none-any.whl", hash = "sha256:c120c43c98af5f5af8877341f8256aba1a170a292645b31572f06b0cf703c683"},
-    {file = "langsmith-0.7.5.tar.gz", hash = "sha256:e3bfc2d7ff0a6f9a719125e1e136b5f4fa11828a2be8979f47ee1a4c0510030e"},
+    {file = "langsmith-0.7.37-py3-none-any.whl", hash = "sha256:64fc5fbf223fcdcc6ee44b08a5df4b2ab8a55e4d968e850c86b6b69fe0c258e3"},
+    {file = "langsmith-0.7.37.tar.gz", hash = "sha256:e15ab27f5febbcfbaec4e6fa74ab71f0284f4c5965249cc732fe9344844290cb"},
 ]
 
 [package.dependencies]
@@ -1655,6 +1674,7 @@ langsmith-pyo3 = ["langsmith-pyo3 (>=0.1.0rc2)"]
 openai-agents = ["openai-agents (>=0.0.3)"]
 otel = ["opentelemetry-api (>=1.30.0)", "opentelemetry-exporter-otlp-proto-http (>=1.30.0)", "opentelemetry-sdk (>=1.30.0)"]
 pytest = ["pytest (>=7.0.0)", "rich (>=13.9.4)", "vcrpy (>=7.0.0)"]
+sandbox = ["websockets (>=15.0)"]
 vcr = ["vcrpy (>=7.0.0)"]
 
 [[package]]
@@ -1829,14 +1849,14 @@ test = ["flaky", "ipykernel (>=6.19.3)", "ipython", "ipywidgets", "nbconvert (>=
 
 [[package]]
 name = "nbconvert"
-version = "7.17.0"
+version = "7.17.1"
 description = "Convert Jupyter Notebooks (.ipynb files) to other formats."
 optional = false
 python-versions = ">=3.9"
 groups = ["jupyter"]
 files = [
-    {file = "nbconvert-7.17.0-py3-none-any.whl", hash = "sha256:4f99a63b337b9a23504347afdab24a11faa7d86b405e5c8f9881cd313336d518"},
-    {file = "nbconvert-7.17.0.tar.gz", hash = "sha256:1b2696f1b5be12309f6c7d707c24af604b87dfaf6d950794c7b07acab96dda78"},
+    {file = "nbconvert-7.17.1-py3-none-any.whl", hash = "sha256:aa85c087b435e7bf1ffd03319f658e285f2b89eccab33bc1ba7025495ab3e7c8"},
+    {file = "nbconvert-7.17.1.tar.gz", hash = "sha256:34d0d0a7e73ce3cbab6c5aae8f4f468797280b01fd8bd2ca746da8569eddd7d2"},
 ]
 
 [package.dependencies]
@@ -2462,14 +2482,14 @@ typing-extensions = ">=4.14.1"
 
 [[package]]
 name = "pygments"
-version = "2.19.2"
+version = "2.20.0"
 description = "Pygments is a syntax highlighting package written in Python."
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.9"
 groups = ["jupyter", "test"]
 files = [
-    {file = "pygments-2.19.2-py3-none-any.whl", hash = "sha256:86540386c03d588bb81d44bc3928634ff26449851e99741617ecb9037ee5ec0b"},
-    {file = "pygments-2.19.2.tar.gz", hash = "sha256:636cb2477cec7f8952536970bc533bc43743542f70392ae026374600add5b887"},
+    {file = "pygments-2.20.0-py3-none-any.whl", hash = "sha256:81a9e26dd42fd28a23a2d169d86d7ac03b46e2f8b59ed4698fb4785f946d0176"},
+    {file = "pygments-2.20.0.tar.gz", hash = "sha256:6757cd03768053ff99f3039c1a36d6c0aa0b263438fcab17520b30a303a82b5f"},
 ]
 
 [package.extras]
@@ -2492,14 +2512,14 @@ diagrams = ["jinja2", "railroad-diagrams"]
 
 [[package]]
 name = "pytest"
-version = "9.0.2"
+version = "9.0.3"
 description = "pytest: simple powerful testing with Python"
 optional = false
 python-versions = ">=3.10"
 groups = ["test"]
 files = [
-    {file = "pytest-9.0.2-py3-none-any.whl", hash = "sha256:711ffd45bf766d5264d487b917733b453d917afd2b0ad65223959f59089f875b"},
-    {file = "pytest-9.0.2.tar.gz", hash = "sha256:75186651a92bd89611d1d9fc20f0b4345fd827c41ccd5c299a868a05d70edf11"},
+    {file = "pytest-9.0.3-py3-none-any.whl", hash = "sha256:2c5efc453d45394fdd706ade797c0a81091eccd1d6e4bccfcd476e2b8e0ab5d9"},
+    {file = "pytest-9.0.3.tar.gz", hash = "sha256:b86ada508af81d19edeb213c681b1d48246c1a91d304c6c81a427674c17eb91c"},
 ]
 
 [package.dependencies]
@@ -2945,25 +2965,25 @@ files = [
 
 [[package]]
 name = "requests"
-version = "2.32.5"
+version = "2.33.1"
 description = "Python HTTP for Humans."
 optional = false
-python-versions = ">=3.9"
+python-versions = ">=3.10"
 groups = ["main", "jupyter", "llm-anthropic", "llm-openai"]
 files = [
-    {file = "requests-2.32.5-py3-none-any.whl", hash = "sha256:2462f94637a34fd532264295e186976db0f5d453d1cdd31473c85a6a161affb6"},
-    {file = "requests-2.32.5.tar.gz", hash = "sha256:dbba0bac56e100853db0ea71b82b4dfd5fe2bf6d3754a8893c3af500cec7d7cf"},
+    {file = "requests-2.33.1-py3-none-any.whl", hash = "sha256:4e6d1ef462f3626a1f0a0a9c42dd93c63bad33f9f1c1937509b8c5c8718ab56a"},
+    {file = "requests-2.33.1.tar.gz", hash = "sha256:18817f8c57c6263968bc123d237e3b8b08ac046f5456bd1e307ee8f4250d3517"},
 ]
 
 [package.dependencies]
-certifi = ">=2017.4.17"
+certifi = ">=2023.5.7"
 charset_normalizer = ">=2,<4"
 idna = ">=2.5,<4"
-urllib3 = ">=1.21.1,<3"
+urllib3 = ">=1.26,<3"
 
 [package.extras]
 socks = ["PySocks (>=1.5.6,!=1.5.7)"]
-use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
+use-chardet-on-py3 = ["chardet (>=3.0.2,<8)"]
 
 [[package]]
 name = "requests-toolbelt"
@@ -3866,4 +3886,4 @@ cffi = ["cffi (>=1.17,<2.0) ; platform_python_implementation != \"PyPy\" and pyt
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<3.14"
-content-hash = "c3e05f036d24ed817c234cbaf420272b700e519e1f628b6366953f4de182320c"
+content-hash = "f11fe39d1a0e738ce7bb151ce4daa5c9f8a5eb983adfb707d591d6d410b08ddb"
