@@ -12,6 +12,7 @@ from typing_extensions import Self
 from ttyg.utils import timeit
 from .sparql_query_artifact import SparqlQueryArtifact
 from .sparql_query_tool import SparqlQueryTool
+from .utils import to_sparql_literal
 
 
 class SimilaritySearchQueryTool(SparqlQueryTool):
@@ -34,7 +35,7 @@ PREFIX sim-index: <http://www.ontotext.com/graphdb/similarity/instance/>
 DESCRIBE ?documentID {{
     SELECT DISTINCT ?documentID {{
         ?search a sim-index:{index_name} ;
-            sim:searchTerm "{query}";
+            sim:searchTerm {query};
             sim:documentResult ?result .
         ?result sim:value ?documentID ;
             sim:score ?score.
@@ -61,11 +62,11 @@ DESCRIBE ?documentID {{
         query: str,
         run_manager: CallbackManagerForToolRun | None = None,
     ) -> Tuple[str, SparqlQueryArtifact]:
-        query = self.sparql_query_template.format(
+        sparql_query = self.sparql_query_template.format(
             index_name=self.index_name,
-            query=query,
+            query=to_sparql_literal(query),
             limit=self.limit,
             similarity_score_threshold=self.similarity_score_threshold,
         )
-        logging.debug(f"Searching with similarity query {query}")
-        return super()._run(query=query, validation=False)
+        logging.debug(f"Searching with similarity query {sparql_query}")
+        return super()._run(query=sparql_query, validation=False)

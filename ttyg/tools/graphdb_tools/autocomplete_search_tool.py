@@ -12,6 +12,7 @@ from ttyg.graphdb import GraphDBAutocompleteStatus, GraphDBRdfRankStatus
 from ttyg.utils import timeit
 from .sparql_query_artifact import SparqlQueryArtifact
 from .sparql_query_tool import SparqlQueryTool
+from .utils import to_sparql_literal
 
 
 class AutocompleteSearchTool(SparqlQueryTool):
@@ -35,7 +36,7 @@ class AutocompleteSearchTool(SparqlQueryTool):
     sparql_query_template: str = """PREFIX rank: <http://www.ontotext.com/owlim/RDFRank#>
 PREFIX auto: <http://www.ontotext.com/plugins/autocomplete#>
 SELECT ?iri ?name ?rank {{
-    ?iri auto:query "{query}" ;
+    ?iri auto:query {query} ;
         {property_path} ?name ;{filter_clause}
         rank:hasRDFRank5 ?rank.
 }}
@@ -73,11 +74,11 @@ LIMIT {limit}"""
         result_class: str | None = None,
         run_manager: CallbackManagerForToolRun | None = None,
     ) -> Tuple[str, SparqlQueryArtifact]:
-        query = self.sparql_query_template.format(
-            query=query,
+        sparql_query = self.sparql_query_template.format(
+            query=to_sparql_literal(query),
             property_path=self.property_path,
             filter_clause=f" a {result_class} ;" if result_class else "",
             limit=limit,
         )
-        logging.debug(f"Searching with autocomplete query {query}")
-        return super()._run(query=query)
+        logging.debug(f"Searching with autocomplete query {sparql_query}")
+        return super()._run(query=sparql_query)
