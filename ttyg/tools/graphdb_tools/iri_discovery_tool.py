@@ -14,6 +14,7 @@ from ttyg.graphdb import GraphDB, GraphDBRdfRankStatus
 from ttyg.utils import timeit
 from .sparql_query_artifact import SparqlQueryArtifact
 from .sparql_query_tool import SparqlQueryTool
+from .utils import to_sparql_literal
 
 
 def _get_default_sparql_template(validated_data: dict[str, Any]) -> str:
@@ -29,7 +30,7 @@ PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX schema: <http://schema.org/>
 PREFIX rank: <http://www.ontotext.com/owlim/RDFRank#>
 SELECT ?iri ?label {{
-    ?label onto:fts ("{query}" "*").
+    ?label onto:fts ({query} "*").
     ?iri rdfs:label|skos:prefLabel|schema:name ?label.
     ?iri rank:hasRDFRank ?rank .
 }}
@@ -42,7 +43,7 @@ PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX schema: <http://schema.org/>
 PREFIX rank: <http://www.ontotext.com/owlim/RDFRank#>
 SELECT ?iri ?label {{
-    ?label onto:fts ("{query}").
+    ?label onto:fts ({query}).
     ?iri rdfs:label|skos:prefLabel|schema:name ?label.
     ?iri rank:hasRDFRank ?rank .
 }}
@@ -96,6 +97,9 @@ class IRIDiscoveryTool(SparqlQueryTool):
         query: str,
         run_manager: CallbackManagerForToolRun | None = None,
     ) -> Tuple[str, SparqlQueryArtifact]:
-        query = self.query_template.format(query=query, limit=self.limit)
-        logging.debug(f"Searching with iri discovery {query}")
-        return super()._run(query=query, validation=False)
+        sparql_query = self.query_template.format(
+            query=to_sparql_literal(query),
+            limit=self.limit
+        )
+        logging.debug(f"Searching with iri discovery {sparql_query}")
+        return super()._run(query=sparql_query, validation=False)

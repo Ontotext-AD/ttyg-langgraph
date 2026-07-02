@@ -8,6 +8,28 @@ from ttyg.tools import AutocompleteSearchTool
 from .constants import GRAPHDB_REPOSITORY_ID
 
 
+def test_query_with_double_quotes_doesnt_throw_error(graphdb: GraphDB) -> None:
+    autocomplete_search_tool = AutocompleteSearchTool(
+        graph=graphdb,
+        graphdb_repository_id=GRAPHDB_REPOSITORY_ID,
+    )
+    results, artifact = autocomplete_search_tool._run(
+        query='"Skywalker"',
+        limit=5,
+    )
+    assert 0 == len(json.loads(results)["results"]["bindings"])
+    print(artifact.query)
+    assert r"""PREFIX rank: <http://www.ontotext.com/owlim/RDFRank#>
+PREFIX auto: <http://www.ontotext.com/plugins/autocomplete#>
+SELECT ?iri ?name ?rank {
+    ?iri auto:query '''\\"Skywalker\\"''' ;
+        <http://www.w3.org/2000/01/rdf-schema#label> ?name ;
+        rank:hasRDFRank5 ?rank.
+}
+ORDER BY DESC(?rank)
+LIMIT 5""" == artifact.query
+
+
 def test_result_class_filter(graphdb: GraphDB) -> None:
     autocomplete_search_tool = AutocompleteSearchTool(
         graph=graphdb,
@@ -21,7 +43,7 @@ def test_result_class_filter(graphdb: GraphDB) -> None:
     assert """PREFIX rank: <http://www.ontotext.com/owlim/RDFRank#>
 PREFIX auto: <http://www.ontotext.com/plugins/autocomplete#>
 SELECT ?iri ?name ?rank {
-    ?iri auto:query "Skywalker" ;
+    ?iri auto:query '''Skywalker''' ;
         <http://www.w3.org/2000/01/rdf-schema#label> ?name ;
         rank:hasRDFRank5 ?rank.
 }
@@ -38,7 +60,7 @@ LIMIT 5""" == artifact.query
 PREFIX rank: <http://www.ontotext.com/owlim/RDFRank#>
 PREFIX auto: <http://www.ontotext.com/plugins/autocomplete#>
 SELECT ?iri ?name ?rank {
-    ?iri auto:query "Skywalker" ;
+    ?iri auto:query '''Skywalker''' ;
         <http://www.w3.org/2000/01/rdf-schema#label> ?name ; a voc:Human ;
         rank:hasRDFRank5 ?rank.
 }
@@ -55,7 +77,7 @@ LIMIT 5""" == artifact.query
 PREFIX rank: <http://www.ontotext.com/owlim/RDFRank#>
 PREFIX auto: <http://www.ontotext.com/plugins/autocomplete#>
 SELECT ?iri ?name ?rank {
-    ?iri auto:query "Skywalker" ;
+    ?iri auto:query '''Skywalker''' ;
         <http://www.w3.org/2000/01/rdf-schema#label> ?name ; a voc:Aleena ;
         rank:hasRDFRank5 ?rank.
 }
@@ -88,7 +110,10 @@ def test_property_path_is_syntactically_wrong(graphdb: GraphDB) -> None:
             query="Skywalker",
             limit=5,
         )
-    assert "Expected SelectQuery, found 'http'  (at char 183), (line:5, col:9)" == str(exc.value)
+    assert (
+               "Expected SelectQuery, found 'http'  (at char 187), (line:5, "
+               "col:9)") == str(
+        exc.value)
 
 
 def test_property_path_is_prefixed(graphdb: GraphDB) -> None:
@@ -106,7 +131,7 @@ def test_property_path_is_prefixed(graphdb: GraphDB) -> None:
 PREFIX rank: <http://www.ontotext.com/owlim/RDFRank#>
 PREFIX auto: <http://www.ontotext.com/plugins/autocomplete#>
 SELECT ?iri ?name ?rank {
-    ?iri auto:query "Skywalker" ;
+    ?iri auto:query '''Skywalker''' ;
         rdfs:label ?name ;
         rank:hasRDFRank5 ?rank.
 }
@@ -114,7 +139,8 @@ ORDER BY DESC(?rank)
 LIMIT 5""" == artifact.query
 
 
-def test_property_path_with_two_properties_which_are_prefixed(graphdb: GraphDB) -> None:
+def test_property_path_with_two_properties_which_are_prefixed(
+    graphdb: GraphDB) -> None:
     autocomplete_search_tool = AutocompleteSearchTool(
         graph=graphdb,
         graphdb_repository_id=GRAPHDB_REPOSITORY_ID,
@@ -125,10 +151,13 @@ def test_property_path_with_two_properties_which_are_prefixed(graphdb: GraphDB) 
             query="Skywalker",
             limit=5,
         )
-    assert "The following IRIs are not used in the data stored in GraphDB: <http://schema.org/name>" == str(exc.value)
+    assert ("The following IRIs are not used in the data stored in GraphDB: "
+            "<http://schema.org/name>") == str(
+        exc.value)
 
 
-def test_property_path_is_prefixed_with_unknown_prefix(graphdb: GraphDB) -> None:
+def test_property_path_is_prefixed_with_unknown_prefix(
+    graphdb: GraphDB) -> None:
     autocomplete_search_tool = AutocompleteSearchTool(
         graph=graphdb,
         graphdb_repository_id=GRAPHDB_REPOSITORY_ID,

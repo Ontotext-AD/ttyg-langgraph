@@ -12,6 +12,7 @@ from typing_extensions import Self
 from ttyg.utils import timeit
 from .sparql_query_artifact import SparqlQueryArtifact
 from .sparql_query_tool import SparqlQueryTool
+from .utils import to_sparql_literal
 
 
 class RetrievalQueryTool(SparqlQueryTool):
@@ -35,7 +36,7 @@ class RetrievalQueryTool(SparqlQueryTool):
 PREFIX retr-inst: <http://www.ontotext.com/connectors/retrieval/instance#>
 SELECT * {{
     [] a retr-inst:{connector_name} ;
-        retr:query "{query}" ;
+        retr:query {query} ;
         retr:limit {limit} ;
         retr:entities ?entity .
     ?entity retr:snippets _:s ;
@@ -62,11 +63,11 @@ SELECT * {{
         score: float | None = 0,
         run_manager: CallbackManagerForToolRun | None = None,
     ) -> Tuple[str, SparqlQueryArtifact]:
-        query = self.sparql_query_template.format(
+        sparql_query = self.sparql_query_template.format(
             connector_name=self.connector_name,
-            query=query,
+            query=to_sparql_literal(query),
             limit=limit,
             score=score,
         )
-        logging.debug(f"Searching with retrieval query {query}")
-        return super()._run(query=query, validation=False)
+        logging.debug(f"Searching with retrieval query {sparql_query}")
+        return super()._run(query=sparql_query, validation=False)
