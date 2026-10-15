@@ -7,8 +7,8 @@ channels:
   # be listed explicitly here.
   - nodefaults
 dependencies:
-  - mamba=2.3.*
+  - mamba=2.8.*
   - conda-lock=3.0.*
   - poetry=2.1.*
   - python=3.13.*
-  - pip=25.3.*  # pip must be mentioned explicitly, or conda-lock will fail
+  - pip=26.2.*  # pip must be mentioned explicitly, or conda-lock will fail
