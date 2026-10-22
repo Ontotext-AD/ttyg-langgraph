@@ -54,7 +54,7 @@ PREFIX sim-index: <http://www.ontotext.com/graphdb/similarity/instance/>
 DESCRIBE ?documentID {
     SELECT DISTINCT ?documentID {
         ?search a sim-index:similarityIndex ;
-            sim:searchTerm '''\\"Skywalker\\"''';
+            sim:searchTerm '''"Skywalker"''';
             sim:documentResult ?result .
         ?result sim:value ?documentID ;
             sim:score ?score.

@@ -18,11 +18,10 @@ def test_query_with_double_quotes_doesnt_throw_error(graphdb: GraphDB) -> None:
         limit=5,
     )
     assert 0 == len(json.loads(results)["results"]["bindings"])
-    print(artifact.query)
     assert r"""PREFIX rank: <http://www.ontotext.com/owlim/RDFRank#>
 PREFIX auto: <http://www.ontotext.com/plugins/autocomplete#>
 SELECT ?iri ?name ?rank {
-    ?iri auto:query '''\\"Skywalker\\"''' ;
+    ?iri auto:query '''"Skywalker"''' ;
         <http://www.w3.org/2000/01/rdf-schema#label> ?name ;
         rank:hasRDFRank5 ?rank.
 }
