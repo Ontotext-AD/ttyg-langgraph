@@ -1,6 +1,6 @@
 [project]
 name = "ttyg"
-version = "4.3.1a0"
+version = "4.4.0"
 description = "Natural language querying for GraphDB using LangGraph agents"
 authors = []
 readme = "README.md"
@@ -8,8 +8,8 @@ license = "Apache-2.0"
 requires-python = ">=3.12,<3.14"
 dependencies = [
     "rdflib[graphdb]==7.6.0",
-    "langchain==1.4.6",
-    "langgraph==1.2.15",
+    "langchain==1.4.7",
+    "langgraph==1.2.16",
 ]
 
 [project.urls]
