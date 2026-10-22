@@ -43,7 +43,7 @@ PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX schema: <http://schema.org/>
 PREFIX rank: <http://www.ontotext.com/owlim/RDFRank#>
 SELECT ?iri ?label {
-    ?label onto:fts ('''\\"Skywalker\\"''' "*").
+    ?label onto:fts ('''"Skywalker"''' "*").
     ?iri rdfs:label|skos:prefLabel|schema:name ?label.
     ?iri rank:hasRDFRank ?rank .
 }

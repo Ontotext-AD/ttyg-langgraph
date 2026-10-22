@@ -51,7 +51,7 @@ def test_query_with_double_quotes(graphdb: GraphDB) -> None:
 PREFIX rank: <http://www.ontotext.com/owlim/RDFRank#>
 DESCRIBE ?iri {
 SELECT DISTINCT ?iri {
-    ?x onto:fts ('''\\"Skywalker\\"''' "*") {
+    ?x onto:fts ('''"Skywalker"''' "*") {
         ?x ?p ?iri .
     } UNION {
         ?iri ?p ?x .
