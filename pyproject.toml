@@ -8,15 +8,15 @@ license = "Apache-2.0"
 requires-python = ">=3.12,<3.14"
 dependencies = [
     "rdflib[graphdb]==7.6.0",
-    "langchain==1.4.7",
-    "langgraph==1.2.16",
+    "langchain==1.5.2",
+    "langgraph==1.2.24",
 ]
 
 [project.urls]
 repository = "https://github.com/Ontotext-AD/ttyg-langgraph"
 
 [tool.poetry.group.test.dependencies]
-pytest = "<10,>=9.1.1"
+pytest = "<10,>=9.2.0"
 pytest-cov = "<8,>=7.1.0"
 
 [tool.poetry.group.jupyter.dependencies]
@@ -29,13 +29,13 @@ optional = true
 optional = true
 
 [tool.poetry.group.llm-openai.dependencies]
-langchain-openai = "1.7.2"
+langchain-openai = "1.8.5"
 
 [tool.poetry.group.llm-anthropic]
 optional = true
 
 [tool.poetry.group.llm-anthropic.dependencies]
-langchain-anthropic = "1.7.6"
+langchain-anthropic = "1.7.12"
 
 [build-system]
 requires = ["poetry-core>=2.0.0"]
